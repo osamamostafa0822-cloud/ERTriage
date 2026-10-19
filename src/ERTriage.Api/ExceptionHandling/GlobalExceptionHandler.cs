@@ -72,6 +72,7 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
             DomainValidationException ex => (StatusCodes.Status400BadRequest, ex.Message, NoErrors),
             NotFoundException ex => (StatusCodes.Status404NotFound, ex.Message, NoErrors),
             InvalidStatusTransitionException ex => (StatusCodes.Status409Conflict, ex.Message, NoErrors),
+            PatientStatusConflictException ex => (StatusCodes.Status409Conflict, ex.Message, NoErrors),
             ConcurrencyConflictException ex => (StatusCodes.Status409Conflict, ex.Message, NoErrors),
             _ => (StatusCodes.Status500InternalServerError, UnexpectedErrorMessage, NoErrors)
         };

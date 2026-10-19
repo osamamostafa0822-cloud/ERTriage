@@ -1,5 +1,6 @@
 using ERTriage.Application;
 using ERTriage.Application.Common;
+using ERTriage.Application.Patients;
 using ERTriage.Infrastructure;
 using ERTriage.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
@@ -42,6 +43,22 @@ public class DependencyInjectionTests
         Assert.NotSame(
             scopeA.ServiceProvider.GetRequiredService<ErTriageDbContext>(),
             scopeB.ServiceProvider.GetRequiredService<ErTriageDbContext>());
+    }
+
+    [Fact]
+    public void AddInfrastructure_Registered_ResolvesPatientRepositoryPerScope()
+    {
+        using var provider = BuildProvider();
+
+        using var scopeA = provider.CreateScope();
+        using var scopeB = provider.CreateScope();
+
+        var repositoryA1 = scopeA.ServiceProvider.GetRequiredService<IPatientRepository>();
+        var repositoryA2 = scopeA.ServiceProvider.GetRequiredService<IPatientRepository>();
+        var repositoryB = scopeB.ServiceProvider.GetRequiredService<IPatientRepository>();
+
+        Assert.Same(repositoryA1, repositoryA2);
+        Assert.NotSame(repositoryA1, repositoryB);
     }
 
     [Fact]

@@ -106,6 +106,15 @@ public class EnvironmentConfigurationTests
     }
 
     [Theory]
+    [InlineData("Development", true)]
+    [InlineData("Test", false)]
+    [InlineData("Production", false)]
+    public void MigrateOnStartup_PerEnvironment_IsEnabledOnlyInDevelopment(string environment, bool expected)
+    {
+        Assert.Equal(expected, ApiConfiguration.IsMigrateOnStartupEnabled(Load(environment)));
+    }
+
+    [Theory]
     [InlineData("appsettings.json")]
     [InlineData("appsettings.Development.json")]
     [InlineData("appsettings.Test.json")]

@@ -1,5 +1,7 @@
 using ERTriage.Application.Common;
+using ERTriage.Application.Patients;
 using ERTriage.Infrastructure.Persistence;
+using ERTriage.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,8 +13,8 @@ public static class DependencyInjection
     public const string ConnectionStringName = "ErTriage";
 
     /// <summary>
-    /// Registers persistence: DbContext (Scoped), Unit of Work (Scoped).
-    /// Specific repositories are added by the milestone that introduces them (M3).
+    /// Registers persistence: DbContext, Unit of Work and the specific repositories (all Scoped, so they share the
+    /// request's DbContext).
     /// </summary>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
@@ -28,6 +30,8 @@ public static class DependencyInjection
         services.AddDbContext<ErTriageDbContext>(options => options.UseSqlServer(connectionString));
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IPatientRepository, PatientRepository>();
+        services.AddScoped<IDatabaseInitializer, DatabaseInitializer>();
 
         return services;
     }

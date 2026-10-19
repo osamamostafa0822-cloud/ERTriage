@@ -75,6 +75,7 @@ public class GlobalExceptionHandlerTests
         { new DomainValidationException("Override reason is required."), StatusCodes.Status400BadRequest, "Override reason is required." },
         { new NotFoundException("Patient not found."), StatusCodes.Status404NotFound, "Patient not found." },
         { new InvalidStatusTransitionException("Waiting", "Discharged"), StatusCodes.Status409Conflict, "Cannot change status from Waiting to Discharged." },
+        { new PatientStatusConflictException("override priority", "Discharged"), StatusCodes.Status409Conflict, "Cannot override priority while the patient is Discharged." },
         { new ConcurrencyConflictException(new Exception("inner secret")), StatusCodes.Status409Conflict, "The record was modified by another user. Reload and retry." }
     };
 

@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The real Api appsettings files, so tests verify what is actually shipped per environment. -->
+    <None Include="..\..\src\ERTriage.Api\appsettings*.json"
+          Link="ApiSettings\%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ERTriage.Domain\ERTriage.Domain.csproj" />
+    <ProjectReference Include="..\..\src\ERTriage.Application\ERTriage.Application.csproj" />
+    <ProjectReference Include="..\..\src\ERTriage.Infrastructure\ERTriage.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\ERTriage.Api\ERTriage.Api.csproj" />
+  </ItemGroup>
+
+</Project>

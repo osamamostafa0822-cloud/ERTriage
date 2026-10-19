@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <!-- Local sensitive settings (Development only): dotnet user-secrets set ... --project src/ERTriage.Api -->
+    <UserSecretsId>7c1e4a52-3b0d-4f6e-9d1a-5a2f8c9e6b13</UserSecretsId>
+    <!-- XML doc comments feed endpoint summaries/examples in the generated OpenAPI document. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ERTriage.Application\ERTriage.Application.csproj" />
+    <!-- Referenced for DI registration only (AddInfrastructure) - see dependency-rules.md. -->
+    <ProjectReference Include="..\ERTriage.Infrastructure\ERTriage.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.18.0" />
+  </ItemGroup>
+
+</Project>

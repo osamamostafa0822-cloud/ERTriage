@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\ERTriage.Domain\ERTriage.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Needed only for the IServiceCollection-based AddApplication() extension. -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+  </ItemGroup>
+
+</Project>

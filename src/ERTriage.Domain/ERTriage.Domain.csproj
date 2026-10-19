@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Domain has no project references and no framework/EF packages (dependency-rules.md). -->
+
+</Project>

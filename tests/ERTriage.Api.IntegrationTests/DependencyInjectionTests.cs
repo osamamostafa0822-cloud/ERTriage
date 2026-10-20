@@ -1,6 +1,7 @@
 using ERTriage.Application;
 using ERTriage.Application.Common;
 using ERTriage.Application.Patients;
+using ERTriage.Application.Triage;
 using ERTriage.Infrastructure;
 using ERTriage.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
@@ -59,6 +60,51 @@ public class DependencyInjectionTests
 
         Assert.Same(repositoryA1, repositoryA2);
         Assert.NotSame(repositoryA1, repositoryB);
+    }
+
+    [Fact]
+    public void AddApplication_Registered_ResolvesUseCaseServicesPerScope()
+    {
+        using var provider = BuildProvider();
+
+        using var scopeA = provider.CreateScope();
+        using var scopeB = provider.CreateScope();
+
+        var registrationA1 = scopeA.ServiceProvider.GetRequiredService<IPatientRegistrationService>();
+        var registrationA2 = scopeA.ServiceProvider.GetRequiredService<IPatientRegistrationService>();
+        var registrationB = scopeB.ServiceProvider.GetRequiredService<IPatientRegistrationService>();
+
+        Assert.Same(registrationA1, registrationA2);
+        Assert.NotSame(registrationA1, registrationB);
+        Assert.NotNull(scopeA.ServiceProvider.GetRequiredService<IPatientWorkflowService>());
+        Assert.NotNull(scopeA.ServiceProvider.GetRequiredService<ITriageBoardService>());
+    }
+
+    [Fact]
+    public void AddApplication_WithoutAnyHostRegistration_StillProvidesTheSystemClock()
+    {
+        using var provider = BuildProvider();
+
+        Assert.Same(TimeProvider.System, provider.GetRequiredService<TimeProvider>());
+    }
+
+    [Fact]
+    public void AddApplication_ClockRegisteredBeforehand_IsNotReplaced()
+    {
+        var fake = new FixedClock();
+
+        using var provider = new ServiceCollection()
+            .AddLogging()
+            .AddSingleton<TimeProvider>(fake)
+            .AddApplication()
+            .AddInfrastructure(ConfigurationWithConnectionString())
+            .BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true, ValidateOnBuild = true });
+
+        Assert.Same(fake, provider.GetRequiredService<TimeProvider>());
+    }
+
+    private sealed class FixedClock : TimeProvider
+    {
     }
 
     [Fact]

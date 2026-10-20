@@ -41,12 +41,18 @@ internal sealed class PatientRepository : IPatientRepository
 
         // A List (instance Contains) keeps the predicate unambiguous for EF's expression translation.
         var statuses = query.Statuses.ToList();
+        var priorities = query.Priorities?.ToList() ?? [];
 
         IQueryable<Patient> patients = _context.Patients.AsNoTracking();
 
         if (statuses.Count > 0)
         {
             patients = patients.Where(p => statuses.Contains(p.Status));
+        }
+
+        if (priorities.Count > 0)
+        {
+            patients = patients.Where(p => priorities.Contains(p.CurrentPriority));
         }
 
         // Business order (docs/03-features/triage-board.md); Id is the deterministic tie-breaker.

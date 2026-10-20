@@ -1,15 +1,25 @@
+using ERTriage.Application.Patients;
+using ERTriage.Application.Triage;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace ERTriage.Application;
 
 public static class DependencyInjection
 {
     /// <summary>
-    /// Registers Application-layer services. Use-case services and validators are added here
-    /// by the milestones that introduce them (M4); none exist in M1.
+    /// Registers the Application use-case services (Scoped, so they share the request's repositories and Unit of Work).
+    /// <see cref="TimeProvider"/> is added with <c>TryAdd</c> so the layer works on its own and a host or test that
+    /// registered another clock first (for example the Api, or a fake) keeps it.
     /// </summary>
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
+        services.TryAddSingleton(TimeProvider.System);
+
+        services.AddScoped<IPatientRegistrationService, PatientRegistrationService>();
+        services.AddScoped<ITriageBoardService, TriageBoardService>();
+        services.AddScoped<IPatientWorkflowService, PatientWorkflowService>();
+
         return services;
     }
 }

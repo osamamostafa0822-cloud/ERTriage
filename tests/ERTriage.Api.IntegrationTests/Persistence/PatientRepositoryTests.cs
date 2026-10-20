@@ -136,6 +136,42 @@ public sealed class PatientRepositoryTests(SqlServerFixture fixture) : Persisten
         Assert.Equal(expectedLetters.Split(',').Length, page.TotalCount);
     }
 
+    // The filter applies to the CURRENT priority (an override counts). Dataset priorities: A2 B1 C2 D3 E1 F4 G2.
+    [SqlServerTheory]
+    [InlineData("", "1", "E,B")]
+    [InlineData("", "2", "C,G,A")]
+    [InlineData("", "1,3", "E,B,D")]
+    [InlineData("", "4", "F")]
+    [InlineData("", "1,2,3,4", "E,B,C,G,A,D,F")]
+    [InlineData("Waiting", "2", "C,A")]
+    [InlineData("Waiting,InTreatment", "1", "E,B")]
+    [InlineData("Discharged,Admitted", "2", "G")]
+    [InlineData("Waiting", "4", "")]
+    public async Task Board_FiltersByPriority_Alone_AndCombinedWithStatus(string statuses, string priorities, string expectedLetters)
+    {
+        await SeedBoardAsync();
+        var statusFilter = statuses.Length == 0 ? [] : statuses.Split(',').Select(Enum.Parse<PatientStatus>).ToArray();
+        var priorityFilter = priorities.Split(',').Select(int.Parse).ToArray();
+
+        var page = await GetBoardAsync(statusFilter, 1, 10, priorityFilter);
+
+        Assert.Equal(expectedLetters, string.Join(",", page.Items.Select(p => p.FullName[^1])));
+        Assert.Equal(expectedLetters.Length == 0 ? 0 : expectedLetters.Split(',').Length, page.TotalCount);
+    }
+
+    [SqlServerFact]
+    public async Task Board_PriorityFilter_IsAppliedBeforePaging()
+    {
+        await SeedBoardAsync();
+
+        var first = await GetBoardAsync([], 1, 2, [2]);
+        var second = await GetBoardAsync([], 2, 2, [2]);
+
+        Assert.Equal(3, first.TotalCount);
+        Assert.Equal("C,G", string.Join(",", first.Items.Select(p => p.FullName[^1])));
+        Assert.Equal("A", string.Join(",", second.Items.Select(p => p.FullName[^1])));
+    }
+
     // ---- board: deterministic tie-breaker and paging ----
 
     [SqlServerFact]
@@ -218,15 +254,19 @@ public sealed class PatientRepositoryTests(SqlServerFixture fixture) : Persisten
 
     // ---- helpers ----
 
-    private static TriageBoardQuery BoardQuery(PatientStatus[] statuses, int pageNumber, int pageSize) =>
-        new(statuses, new PaginationRequest(pageNumber, pageSize));
+    private static TriageBoardQuery BoardQuery(PatientStatus[] statuses, int pageNumber, int pageSize, int[]? priorities = null) =>
+        new(statuses, new PaginationRequest(pageNumber, pageSize), priorities);
 
-    private async Task<PagedResult<Patient>> GetBoardAsync(PatientStatus[] statuses, int pageNumber, int pageSize)
+    private async Task<PagedResult<Patient>> GetBoardAsync(
+        PatientStatus[] statuses,
+        int pageNumber,
+        int pageSize,
+        int[]? priorities = null)
     {
         await using var scope = Services.CreateAsyncScope();
 
         return await scope.ServiceProvider.GetRequiredService<IPatientRepository>()
-            .GetBoardPageAsync(BoardQuery(statuses, pageNumber, pageSize), CancellationToken.None);
+            .GetBoardPageAsync(BoardQuery(statuses, pageNumber, pageSize, priorities), CancellationToken.None);
     }
 
     // Expected business order: E, B, C, G, A, D, F (priority 1..4, then the longer-waiting arrival first).

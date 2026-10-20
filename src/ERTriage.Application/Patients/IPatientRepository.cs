@@ -24,7 +24,7 @@ public interface IPatientRepository
     Task<Patient?> GetByIdReadOnlyAsync(Guid id, CancellationToken cancellationToken);
 
     /// <summary>
-    /// One page of the triage board (not tracked): filtered by status, ordered by current priority, arrival time
+    /// One page of the triage board (not tracked): filtered by status and current priority, ordered by current priority, arrival time
     /// and Id, paged in the database.
     /// </summary>
     Task<PagedResult<Patient>> GetBoardPageAsync(TriageBoardQuery query, CancellationToken cancellationToken);

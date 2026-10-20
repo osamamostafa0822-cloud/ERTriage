@@ -8,6 +8,8 @@
     <!-- Needed only for the IServiceCollection-based AddApplication() extension.
          10.0.13: EF Core 10.0.13 (Caching.Memory) requires >= 10.0.13; a lower direct version would fail restore (NU1605). D-49. -->
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.13" />
+    <!-- ILogger<T> for the use-case services (approved 2026-10-20). Same 10.0.13 as the rest of the Microsoft.Extensions family (D-49). Abstractions only: no provider. -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.13" />
   </ItemGroup>
 
 </Project>

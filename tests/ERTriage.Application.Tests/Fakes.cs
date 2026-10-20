@@ -82,3 +82,16 @@ internal sealed class FakeUnitOfWork : IUnitOfWork
         return Task.FromResult(1);
     }
 }
+
+/// <summary>Records every notification the services publish (no mocking library).</summary>
+internal sealed class RecordingPatientChangeNotifier : IPatientChangeNotifier
+{
+    public List<PatientChangedNotification> Notifications { get; } = [];
+
+    public Task NotifyAsync(PatientChangedNotification notification, CancellationToken cancellationToken)
+    {
+        Notifications.Add(notification);
+
+        return Task.CompletedTask;
+    }
+}

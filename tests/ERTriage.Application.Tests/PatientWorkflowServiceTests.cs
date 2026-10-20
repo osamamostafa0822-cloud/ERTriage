@@ -13,8 +13,9 @@ public class PatientWorkflowServiceTests
     private readonly CapturingLogger<PatientWorkflowService> _logger = new();
     private readonly FakePatientRepository _repository = new();
     private readonly FakeUnitOfWork _unitOfWork = new();
+    private readonly RecordingPatientChangeNotifier _notifier = new();
 
-    private PatientWorkflowService CreateService() => new(_repository, _unitOfWork, _clock, _logger);
+    private PatientWorkflowService CreateService() => new(_repository, _unitOfWork, _notifier, _clock, _logger);
 
     private Patient SeedWaiting()
     {
@@ -295,5 +296,70 @@ public class PatientWorkflowServiceTests
 
         await Assert.ThrowsAsync<ConcurrencyConflictException>(
             () => CreateService().OverridePriorityAsync(patient.Id, new(1, "Valid reason", null), CancellationToken.None));
+    }
+
+    // ---- notifications (D-79) ----
+
+    [Fact]
+    public async Task ChangeStatusAsync_Success_NotifiesOnceWithoutPatientData()
+    {
+        var patient = SeedWaiting();
+
+        await CreateService().ChangeStatusAsync(patient.Id, new(PatientStatus.InTreatment, null), CancellationToken.None);
+
+        var notification = Assert.Single(_notifier.Notifications);
+        Assert.Equal(PatientChangeType.StatusChanged, notification.ChangeType);
+        Assert.Equal(patient.Id, notification.PatientId);
+        Assert.Equal(PatientStatus.InTreatment, notification.Status);
+        Assert.Equal(patient.CurrentPriority, notification.Priority);
+        Assert.Equal(_clock.GetUtcNow(), notification.OccurredAt);
+    }
+
+    [Fact]
+    public async Task OverridePriorityAsync_Success_NotifiesOnceWithTheNewPriority()
+    {
+        var patient = SeedWaiting();
+
+        await CreateService().OverridePriorityAsync(patient.Id, new(3, "Stable on review", "Nurse Test"), CancellationToken.None);
+
+        var notification = Assert.Single(_notifier.Notifications);
+        Assert.Equal(PatientChangeType.PriorityOverridden, notification.ChangeType);
+        Assert.Equal(patient.Id, notification.PatientId);
+        Assert.Equal(3, notification.Priority);
+        Assert.Equal(PatientStatus.Waiting, notification.Status);
+    }
+
+    [Fact]
+    public async Task ChangeStatusAsync_RejectedTransition_DoesNotNotify()
+    {
+        var patient = SeedWaiting();
+
+        await Assert.ThrowsAsync<InvalidStatusTransitionException>(
+            () => CreateService().ChangeStatusAsync(patient.Id, new(PatientStatus.Discharged, "Too early."), CancellationToken.None));
+
+        Assert.Empty(_notifier.Notifications);
+    }
+
+    [Fact]
+    public async Task ChangeStatusAsync_SaveFails_DoesNotNotify()
+    {
+        var patient = SeedWaiting();
+        _unitOfWork.ToThrow = new ConcurrencyConflictException(new InvalidOperationException("inner"));
+
+        await Assert.ThrowsAsync<ConcurrencyConflictException>(
+            () => CreateService().ChangeStatusAsync(patient.Id, new(PatientStatus.InTreatment, null), CancellationToken.None));
+
+        Assert.Empty(_notifier.Notifications);
+    }
+
+    [Fact]
+    public async Task OverridePriorityAsync_MissingReason_DoesNotNotify()
+    {
+        var patient = SeedWaiting();
+
+        await Assert.ThrowsAsync<ValidationException>(
+            () => CreateService().OverridePriorityAsync(patient.Id, new(1, "  ", null), CancellationToken.None));
+
+        Assert.Empty(_notifier.Notifications);
     }
 }

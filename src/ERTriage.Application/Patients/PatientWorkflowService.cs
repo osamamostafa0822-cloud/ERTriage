@@ -17,18 +17,21 @@ public sealed class PatientWorkflowService : IPatientWorkflowService
 {
     private readonly IPatientRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IPatientChangeNotifier _notifier;
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<PatientWorkflowService> _logger;
 
     public PatientWorkflowService(
         IPatientRepository repository,
         IUnitOfWork unitOfWork,
+        IPatientChangeNotifier notifier,
         TimeProvider timeProvider,
         ILogger<PatientWorkflowService> logger)
     {
         _logger = logger;
         _repository = repository;
         _unitOfWork = unitOfWork;
+        _notifier = notifier;
         _timeProvider = timeProvider;
     }
 
@@ -53,6 +56,12 @@ public sealed class PatientWorkflowService : IPatientWorkflowService
             previousStatus,
             patient.Status);
 
+        // Committed above, so tell the other boards. Deliberately not tied to the request's cancellation token: a client
+        // that disconnects after the save must not suppress the notification. The notifier never throws for delivery errors.
+        await _notifier.NotifyAsync(
+            PatientChangedNotification.For(PatientChangeType.StatusChanged, patient, _timeProvider.GetUtcNow()),
+            CancellationToken.None);
+
         return PatientMapper.ToDto(patient);
     }
 
@@ -75,6 +84,12 @@ public sealed class PatientWorkflowService : IPatientWorkflowService
             patient.Id,
             patient.CalculatedPriority,
             patient.CurrentPriority);
+
+        // Committed above, so tell the other boards. Deliberately not tied to the request's cancellation token: a client
+        // that disconnects after the save must not suppress the notification. The notifier never throws for delivery errors.
+        await _notifier.NotifyAsync(
+            PatientChangedNotification.For(PatientChangeType.PriorityOverridden, patient, _timeProvider.GetUtcNow()),
+            CancellationToken.None);
 
         return PatientMapper.ToDto(patient);
     }

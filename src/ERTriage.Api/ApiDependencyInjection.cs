@@ -3,6 +3,9 @@ using ERTriage.Api.Localization;
 using ERTriage.Api.Configuration;
 using ERTriage.Api.Documentation;
 using ERTriage.Api.ExceptionHandling;
+using ERTriage.Api.Realtime;
+using ERTriage.Application.Patients;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace ERTriage.Api;
 
@@ -37,6 +40,14 @@ public static class ApiDependencyInjection
         services.AddCors(options =>
             options.AddPolicy(CorsPolicyName, policy =>
                 policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod()));
+
+        // Real-time board updates (D-79). Enums travel as strings, like the REST API. Replace (not TryAdd) so the
+        // SignalR notifier wins over the Application's no-op default whatever the registration order.
+        services.AddHttpContextAccessor();
+        services
+            .AddSignalR()
+            .AddJsonProtocol(options => options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+        services.Replace(ServiceDescriptor.Scoped<IPatientChangeNotifier, SignalRPatientChangeNotifier>());
 
         services.AddHealthChecks(); // liveness only; a DB check needs an extra package (not added in M1)
         services.AddApiDocumentation(configuration);

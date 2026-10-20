@@ -16,6 +16,9 @@ public static class DependencyInjection
     {
         services.TryAddSingleton(TimeProvider.System);
 
+        // Real-time fan-out is optional: a host that registers a transport (the Api's SignalR notifier) keeps it.
+        services.TryAddSingleton<IPatientChangeNotifier, NoOpPatientChangeNotifier>();
+
         services.AddScoped<IPatientRegistrationService, PatientRegistrationService>();
         services.AddScoped<ITriageBoardService, TriageBoardService>();
         services.AddScoped<IPatientWorkflowService, PatientWorkflowService>();

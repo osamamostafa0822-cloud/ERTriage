@@ -12,8 +12,9 @@ public class PatientRegistrationServiceTests
     private readonly CapturingLogger<PatientRegistrationService> _logger = new();
     private readonly FakePatientRepository _repository = new();
     private readonly FakeUnitOfWork _unitOfWork = new();
+    private readonly RecordingPatientChangeNotifier _notifier = new();
 
-    private PatientRegistrationService CreateService() => new(_repository, _unitOfWork, _clock, _logger);
+    private PatientRegistrationService CreateService() => new(_repository, _unitOfWork, _notifier, _clock, _logger);
 
     private RegisterPatientRequest ValidRequest() =>
         new("Test Patient Alpha", 54, "Shortness of breath", 112, 138, 86, 37.9m, 88, _clock.GetUtcNow());
@@ -172,5 +173,39 @@ public class PatientRegistrationServiceTests
             () => CreateService().GetByIdAsync(id, CancellationToken.None));
 
         Assert.DoesNotContain(id.ToString(), exception.Message);
+    }
+
+    // ---- notifications (D-79) ----
+
+    [Fact]
+    public async Task RegisterAsync_ValidRequest_NotifiesOnceAsRegistered()
+    {
+        var dto = await CreateService().RegisterAsync(ValidRequest(), CancellationToken.None);
+
+        var notification = Assert.Single(_notifier.Notifications);
+        Assert.Equal(PatientChangeType.Registered, notification.ChangeType);
+        Assert.Equal(dto.Id, notification.PatientId);
+        Assert.Equal(dto.CurrentPriority, notification.Priority);
+        Assert.Equal(PatientStatus.Waiting, notification.Status);
+    }
+
+    [Fact]
+    public async Task RegisterAsync_InvalidRequest_DoesNotNotify()
+    {
+        await Assert.ThrowsAsync<ValidationException>(
+            () => CreateService().RegisterAsync(ValidRequest() with { FullName = " " }, CancellationToken.None));
+
+        Assert.Empty(_notifier.Notifications);
+    }
+
+    [Fact]
+    public async Task RegisterAsync_SaveFails_DoesNotNotify()
+    {
+        _unitOfWork.ToThrow = new InvalidOperationException("database down");
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => CreateService().RegisterAsync(ValidRequest(), CancellationToken.None));
+
+        Assert.Empty(_notifier.Notifications);
     }
 }

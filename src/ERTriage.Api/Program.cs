@@ -1,5 +1,6 @@
 using ERTriage.Api;
 using ERTriage.Api.Documentation;
+using ERTriage.Api.Realtime;
 using ERTriage.Api.Startup;
 using ERTriage.Application;
 using ERTriage.Infrastructure;
@@ -21,6 +22,7 @@ app.UseExceptionHandler();
 app.UseCors(ApiDependencyInjection.CorsPolicyName);
 
 app.MapControllers();
+app.MapHub<TriageHub>(TriageHub.Path); // CORS: the global policy above also covers /negotiate
 app.MapHealthChecks("/health");
 app.MapApiDocumentation(); // OpenAPI + Scalar, only when ApiDocumentation:Enabled
 

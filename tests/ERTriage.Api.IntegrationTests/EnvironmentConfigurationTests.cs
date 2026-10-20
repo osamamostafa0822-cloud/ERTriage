@@ -41,14 +41,14 @@ public class EnvironmentConfigurationTests
     }
 
     [Fact]
-    public void Development_UsesLocalDbDevelopmentDatabase()
+    public void Development_HasAConnectionStringWithADatabaseName()
     {
+        // Owner decision (2026-10-20): Development may point at the owner's hosted SQL Server instead of LocalDB.
         var connectionString = Load("Development")[ApiConfiguration.ConnectionStringKey];
 
         Assert.NotNull(connectionString);
-        Assert.Contains("(localdb)", connectionString, StringComparison.OrdinalIgnoreCase);
         Assert.True(ApiConfiguration.TryGetDatabaseName(connectionString, out var name));
-        Assert.Equal("ERTriage", name);
+        Assert.False(string.IsNullOrWhiteSpace(name));
     }
 
     [Fact]
@@ -123,8 +123,14 @@ public class EnvironmentConfigurationTests
     {
         var content = File.ReadAllText(Path.Combine(SettingsDirectory, fileName));
 
-        Assert.DoesNotContain("password=", content, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("pwd=", content, StringComparison.OrdinalIgnoreCase);
+        // Owner decision (2026-10-20): the Development file may carry the hosted database credentials.
+        // Every other shipped file (base, Test, Production) must stay credential-free.
+        if (!fileName.Equals("appsettings.Development.json", StringComparison.OrdinalIgnoreCase))
+        {
+            Assert.DoesNotContain("password=", content, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("pwd=", content, StringComparison.OrdinalIgnoreCase);
+        }
+
         Assert.DoesNotContain("apikey", content, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("secret", content, StringComparison.OrdinalIgnoreCase);
     }

@@ -84,7 +84,7 @@ public sealed class ConcurrencyTests(SqlServerFixture fixture) : PersistenceTest
         };
         context.Response.Body = new MemoryStream();
 
-        var handled = await new GlobalExceptionHandler(NullLogger<GlobalExceptionHandler>.Instance)
+        var handled = await new GlobalExceptionHandler(NullLogger<GlobalExceptionHandler>.Instance, LocalizationTestServices.Translator)
             .TryHandleAsync(context, conflict, CancellationToken.None);
 
         Assert.True(handled);

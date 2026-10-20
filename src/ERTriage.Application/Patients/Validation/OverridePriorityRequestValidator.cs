@@ -1,3 +1,4 @@
+using ERTriage.Domain.Common;
 using ERTriage.Application.Common;
 using ERTriage.Application.Patients.Requests;
 using ERTriage.Domain.Patients;
@@ -15,14 +16,14 @@ public static class OverridePriorityRequestValidator
     {
         if (request is null)
         {
-            return [new ApiError(null, "Request body is required.")];
+            return [new ApiError(null, MessageCatalog.Get("BodyRequired"))];
         }
 
         var errors = new FieldErrors();
 
-        errors.Range("priority", "Priority", request.Priority, TriagePriority.MostUrgent, TriagePriority.LeastUrgent);
-        errors.RequiredText("reason", "Override reason", request.Reason, PatientRules.OverrideReasonMinLength, PatientRules.OverrideReasonMaxLength);
-        errors.OptionalText("overriddenBy", "Overridden by", request.OverriddenBy, PatientRules.OverriddenByMaxLength);
+        errors.Range("priority", MessageCatalog.Get("Priority"), request.Priority, TriagePriority.MostUrgent, TriagePriority.LeastUrgent);
+        errors.RequiredText("reason", MessageCatalog.Get("OverrideReason"), request.Reason, PatientRules.OverrideReasonMinLength, PatientRules.OverrideReasonMaxLength);
+        errors.OptionalText("overriddenBy", MessageCatalog.Get("OverriddenBy"), request.OverriddenBy, PatientRules.OverriddenByMaxLength);
 
         return errors.ToList();
     }

@@ -1,4 +1,4 @@
-using System.Globalization;
+using ERTriage.Domain.Common;
 
 namespace ERTriage.Application.Common;
 
@@ -10,26 +10,26 @@ internal sealed class FieldErrors
 {
     private readonly List<ApiError> _errors = [];
 
-    public void Add(string? field, string message) => _errors.Add(new ApiError(field, message));
+    public void Add(string? field, MessageDescriptor message) => _errors.Add(new ApiError(field, message));
 
     public void AddRange(IEnumerable<ApiError> errors) => _errors.AddRange(errors);
 
     public IReadOnlyList<ApiError> ToList() => _errors.ToArray();
 
     /// <summary>Required text, trimmed, within the bounds. Returns false (and adds an error) otherwise.</summary>
-    public bool RequiredText(string field, string label, string? value, int minLength, int maxLength)
+    public bool RequiredText(string field, MessageDescriptor label, string? value, int minLength, int maxLength)
     {
         var trimmed = value?.Trim();
 
         if (string.IsNullOrEmpty(trimmed))
         {
-            Add(field, $"{label} is required.");
+            Add(field, MessageCatalog.Format("Required", label));
             return false;
         }
 
         if (trimmed.Length < minLength || trimmed.Length > maxLength)
         {
-            Add(field, FormattableString.Invariant($"{label} must be between {minLength} and {maxLength} characters."));
+            Add(field, MessageCatalog.Format("TextLength", label, minLength, maxLength));
             return false;
         }
 
@@ -37,47 +37,47 @@ internal sealed class FieldErrors
     }
 
     /// <summary>Optional text: blank is fine; otherwise (trimmed) it must fit <paramref name="maxLength"/>.</summary>
-    public bool OptionalText(string field, string label, string? value, int maxLength)
+    public bool OptionalText(string field, MessageDescriptor label, string? value, int maxLength)
     {
         var trimmed = value?.Trim();
 
         if (!string.IsNullOrEmpty(trimmed) && trimmed.Length > maxLength)
         {
-            Add(field, FormattableString.Invariant($"{label} must be at most {maxLength} characters."));
+            Add(field, MessageCatalog.Format("TextMaxLength", label, maxLength));
             return false;
         }
 
         return true;
     }
 
-    public bool Range(string field, string label, int? value, int min, int max, string unit = "")
+    public bool Range(string field, MessageDescriptor label, int? value, int min, int max, MessageDescriptor? unit = null)
     {
         if (value is not { } number)
         {
-            Add(field, $"{label} is required.");
+            Add(field, MessageCatalog.Format("Required", label));
             return false;
         }
 
         if (number < min || number > max)
         {
-            Add(field, FormattableString.Invariant($"{label} must be between {min} and {max}{unit}."));
+            Add(field, MessageCatalog.Format("Range", label, min, max, (object?)unit ?? ""));
             return false;
         }
 
         return true;
     }
 
-    public bool Range(string field, string label, decimal? value, decimal min, decimal max, string unit = "")
+    public bool Range(string field, MessageDescriptor label, decimal? value, decimal min, decimal max, MessageDescriptor? unit = null)
     {
         if (value is not { } number)
         {
-            Add(field, $"{label} is required.");
+            Add(field, MessageCatalog.Format("Required", label));
             return false;
         }
 
         if (number < min || number > max)
         {
-            Add(field, string.Create(CultureInfo.InvariantCulture, $"{label} must be between {min:0.0} and {max:0.0}{unit}."));
+            Add(field, MessageCatalog.Format("DecimalRange", label, min, max, (object?)unit ?? ""));
             return false;
         }
 

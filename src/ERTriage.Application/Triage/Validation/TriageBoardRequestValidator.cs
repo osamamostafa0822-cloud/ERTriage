@@ -1,3 +1,4 @@
+using ERTriage.Domain.Common;
 using ERTriage.Application.Common;
 using ERTriage.Domain.Triage;
 
@@ -13,22 +14,21 @@ public static class TriageBoardRequestValidator
     {
         if (request is null)
         {
-            return [new ApiError(null, "Request is required.")];
+            return [new ApiError(null, MessageCatalog.Get("RequestRequired"))];
         }
 
         var errors = new FieldErrors();
 
         if (request.Statuses is not null && request.Statuses.Any(status => !Enum.IsDefined(status)))
         {
-            errors.Add("status", "Status must be a valid patient status.");
+            errors.Add("status", MessageCatalog.Get("StatusInvalid"));
         }
 
         if (request.Priorities is not null && request.Priorities.Any(priority => !TriagePriority.IsValid(priority)))
         {
             errors.Add(
                 "priority",
-                FormattableString.Invariant(
-                    $"Priority must be between {TriagePriority.MostUrgent} and {TriagePriority.LeastUrgent}."));
+                MessageCatalog.Format("PriorityRange", TriagePriority.MostUrgent, TriagePriority.LeastUrgent));
         }
 
         errors.AddRange(new PaginationRequest(request.PageNumber, request.PageSize).GetErrors());

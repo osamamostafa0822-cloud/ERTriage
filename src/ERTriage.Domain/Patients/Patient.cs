@@ -73,19 +73,19 @@ public sealed class Patient
         ArgumentNullException.ThrowIfNull(timeProvider);
         var now = timeProvider.GetUtcNow();
 
-        var name = Guard.RequiredText(fullName, "Full name", PatientRules.FullNameMinLength, PatientRules.FullNameMaxLength);
-        Guard.InRange(age, PatientRules.AgeMin, PatientRules.AgeMax, "Age", " years");
+        var name = Guard.RequiredText(fullName, MessageCatalog.Get("FullName"), PatientRules.FullNameMinLength, PatientRules.FullNameMaxLength);
+        Guard.InRange(age, PatientRules.AgeMin, PatientRules.AgeMax, MessageCatalog.Get("Age"), MessageCatalog.Get("Years"));
         var complaint = Guard.RequiredText(
-            chiefComplaint, "Chief complaint", PatientRules.ChiefComplaintMinLength, PatientRules.ChiefComplaintMaxLength);
+            chiefComplaint, MessageCatalog.Get("ChiefComplaint"), PatientRules.ChiefComplaintMinLength, PatientRules.ChiefComplaintMaxLength);
 
         if (vitals is null)
         {
-            throw new DomainValidationException("Vital signs are required.");
+            throw new DomainValidationException(MessageCatalog.Get("VitalsRequired"));
         }
 
         if (arrivalTime > now + PatientRules.ArrivalFutureTolerance)
         {
-            throw new DomainValidationException("Arrival time cannot be more than 5 minutes in the future.");
+            throw new DomainValidationException(MessageCatalog.Format("ArrivalFuture", (int)PatientRules.ArrivalFutureTolerance.TotalMinutes));
         }
 
         var assessment = TriagePriorityCalculator.Calculate(vitals);
@@ -126,12 +126,12 @@ public sealed class Patient
         if (!TriagePriority.IsValid(priority))
         {
             throw new DomainValidationException(
-                $"Priority must be between {TriagePriority.MostUrgent} and {TriagePriority.LeastUrgent}.");
+                MessageCatalog.Format("PriorityRange", TriagePriority.MostUrgent, TriagePriority.LeastUrgent));
         }
 
         var validReason = Guard.RequiredText(
-            reason, "Override reason", PatientRules.OverrideReasonMinLength, PatientRules.OverrideReasonMaxLength);
-        var validOverriddenBy = Guard.OptionalText(overriddenBy, "Overridden by", PatientRules.OverriddenByMaxLength);
+            reason, MessageCatalog.Get("OverrideReason"), PatientRules.OverrideReasonMinLength, PatientRules.OverrideReasonMaxLength);
+        var validOverriddenBy = Guard.OptionalText(overriddenBy, MessageCatalog.Get("OverriddenBy"), PatientRules.OverriddenByMaxLength);
 
         OverridePriority = priority;
         OverrideReason = validReason;
@@ -159,11 +159,11 @@ public sealed class Patient
         if (target is PatientStatus.Discharged or PatientStatus.Admitted)
         {
             note = Guard.RequiredText(
-                dispositionNote, "Disposition note", PatientRules.DispositionNoteMinLength, PatientRules.DispositionNoteMaxLength);
+                dispositionNote, MessageCatalog.Get("DispositionNote"), PatientRules.DispositionNoteMinLength, PatientRules.DispositionNoteMaxLength);
         }
         else if (!string.IsNullOrWhiteSpace(dispositionNote))
         {
-            throw new DomainValidationException("A disposition note is only allowed when discharging or admitting.");
+            throw new DomainValidationException(MessageCatalog.Get("DispositionNotAllowed"));
         }
 
         Status = target;

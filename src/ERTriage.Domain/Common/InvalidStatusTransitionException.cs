@@ -1,3 +1,4 @@
+using ERTriage.Domain.Common;
 namespace ERTriage.Domain.Common;
 
 /// <summary>
@@ -7,7 +8,7 @@ namespace ERTriage.Domain.Common;
 public sealed class InvalidStatusTransitionException : DomainException
 {
     public InvalidStatusTransitionException(string from, string to)
-        : base($"Cannot change status from {from} to {to}.")
+        : base(MessageCatalog.Format("InvalidTransition", MessageCatalog.Status(from), MessageCatalog.Status(to)))
     {
         From = from;
         To = to;

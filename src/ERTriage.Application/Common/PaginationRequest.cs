@@ -1,3 +1,4 @@
+using ERTriage.Domain.Common;
 namespace ERTriage.Application.Common;
 
 /// <summary>
@@ -22,12 +23,12 @@ public record PaginationRequest(
 
         if (PageNumber < FirstPage)
         {
-            errors.Add(new ApiError("pageNumber", $"Page number must be at least {FirstPage}."));
+            errors.Add(new ApiError("pageNumber", MessageCatalog.Format("PageNumberMin", FirstPage)));
         }
 
         if (PageSize < 1 || PageSize > MaxPageSize)
         {
-            errors.Add(new ApiError("pageSize", $"Page size must be between 1 and {MaxPageSize}."));
+            errors.Add(new ApiError("pageSize", MessageCatalog.Format("PageSizeRange", MaxPageSize)));
         }
 
         return errors;

@@ -1,3 +1,4 @@
+using ERTriage.Domain.Common;
 namespace ERTriage.Application.Common;
 
 /// <summary>
@@ -7,7 +8,7 @@ namespace ERTriage.Application.Common;
 public sealed class ConcurrencyConflictException : Exception
 {
     public ConcurrencyConflictException(Exception innerException)
-        : base("The record was modified by another user. Reload and retry.", innerException)
+        : base(MessageCatalog.Get("ConcurrencyConflict").ToString(), innerException)
     {
     }
 }

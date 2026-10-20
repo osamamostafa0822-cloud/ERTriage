@@ -1,3 +1,4 @@
+using ERTriage.Domain.Common;
 using ERTriage.Application.Common;
 using ERTriage.Application.Patients.Dtos;
 using ERTriage.Application.Patients.Requests;
@@ -80,5 +81,5 @@ public sealed class PatientWorkflowService : IPatientWorkflowService
 
     private async Task<Patient> LoadForUpdateAsync(Guid id, CancellationToken cancellationToken) =>
         await _repository.GetByIdAsync(id, cancellationToken)
-            ?? throw new NotFoundException("Patient was not found.");
+            ?? throw new NotFoundException(MessageCatalog.Get("PatientNotFound"));
 }

@@ -10,4 +10,11 @@ public abstract class DomainException : Exception
     protected DomainException(string message) : base(message)
     {
     }
+
+    protected DomainException(MessageDescriptor message) : base(message.ToString())
+    {
+        Description = message;
+    }
+
+    public MessageDescriptor? Description { get; }
 }

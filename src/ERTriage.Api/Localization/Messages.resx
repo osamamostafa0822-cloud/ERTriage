@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <data name="Required" xml:space="preserve"><value>{0} is required.</value></data>
+  <data name="TextLength" xml:space="preserve"><value>{0} must be between {1} and {2} characters.</value></data>
+  <data name="TextMaxLength" xml:space="preserve"><value>{0} must be at most {1} characters.</value></data>
+  <data name="Range" xml:space="preserve"><value>{0} must be between {1} and {2}{3}.</value></data>
+  <data name="DecimalRange" xml:space="preserve"><value>{0} must be between {1:0.0} and {2:0.0}{3}.</value></data>
+  <data name="FullName" xml:space="preserve"><value>Full name</value></data>
+  <data name="Age" xml:space="preserve"><value>Age</value></data>
+  <data name="ChiefComplaint" xml:space="preserve"><value>Chief complaint</value></data>
+  <data name="HeartRate" xml:space="preserve"><value>Heart rate</value></data>
+  <data name="SystolicBp" xml:space="preserve"><value>Systolic blood pressure</value></data>
+  <data name="DiastolicBp" xml:space="preserve"><value>Diastolic blood pressure</value></data>
+  <data name="Temperature" xml:space="preserve"><value>Temperature</value></data>
+  <data name="SpO2" xml:space="preserve"><value>SpO2</value></data>
+  <data name="Priority" xml:space="preserve"><value>Priority</value></data>
+  <data name="OverrideReason" xml:space="preserve"><value>Override reason</value></data>
+  <data name="OverriddenBy" xml:space="preserve"><value>Overridden by</value></data>
+  <data name="DispositionNote" xml:space="preserve"><value>Disposition note</value></data>
+  <data name="Years" xml:space="preserve"><value> years</value></data>
+  <data name="Bpm" xml:space="preserve"><value> bpm</value></data>
+  <data name="MmHg" xml:space="preserve"><value> mmHg</value></data>
+  <data name="Celsius" xml:space="preserve"><value> °C</value></data>
+  <data name="Percent" xml:space="preserve"><value> %</value></data>
+  <data name="BodyRequired" xml:space="preserve"><value>Request body is required.</value></data>
+  <data name="RequestRequired" xml:space="preserve"><value>Request is required.</value></data>
+  <data name="TargetRequired" xml:space="preserve"><value>Target status is required.</value></data>
+  <data name="TargetInvalid" xml:space="preserve"><value>Target status is not a valid patient status.</value></data>
+  <data name="StatusInvalid" xml:space="preserve"><value>Status must be a valid patient status.</value></data>
+  <data name="DispositionNotAllowed" xml:space="preserve"><value>A disposition note is only allowed when discharging or admitting.</value></data>
+  <data name="BpOrder" xml:space="preserve"><value>Diastolic blood pressure must be lower than systolic blood pressure.</value></data>
+  <data name="TemperaturePrecision" xml:space="preserve"><value>Temperature must have at most one decimal place.</value></data>
+  <data name="ArrivalRequired" xml:space="preserve"><value>Arrival time is required.</value></data>
+  <data name="ArrivalFuture" xml:space="preserve"><value>Arrival time cannot be more than {0} minutes in the future.</value></data>
+  <data name="VitalsRequired" xml:space="preserve"><value>Vital signs are required.</value></data>
+  <data name="PriorityRange" xml:space="preserve"><value>Priority must be between {0} and {1}.</value></data>
+  <data name="PageNumberMin" xml:space="preserve"><value>Page number must be at least {0}.</value></data>
+  <data name="PageSizeRange" xml:space="preserve"><value>Page size must be between 1 and {0}.</value></data>
+  <data name="ConcurrencyConflict" xml:space="preserve"><value>The record was modified by another user. Reload and retry.</value></data>
+  <data name="ValidationFailed" xml:space="preserve"><value>Validation failed.</value></data>
+  <data name="PatientNotFound" xml:space="preserve"><value>Patient was not found.</value></data>
+  <data name="UnexpectedError" xml:space="preserve"><value>An unexpected error occurred.</value></data>
+  <data name="InvalidTransition" xml:space="preserve"><value>Cannot change status from {0} to {1}.</value></data>
+  <data name="StatusConflict" xml:space="preserve"><value>Cannot {0} while the patient is {1}.</value></data>
+  <data name="Waiting" xml:space="preserve"><value>Waiting</value></data>
+  <data name="InTreatment" xml:space="preserve"><value>InTreatment</value></data>
+  <data name="Discharged" xml:space="preserve"><value>Discharged</value></data>
+  <data name="Admitted" xml:space="preserve"><value>Admitted</value></data>
+  <data name="OverrideOperation" xml:space="preserve"><value>override priority</value></data>
+  <data name="AllNormal" xml:space="preserve"><value>All scored vitals within normal bands</value></data>
+  <data name="HR" xml:space="preserve"><value>HR</value></data>
+  <data name="SBP" xml:space="preserve"><value>SBP</value></data>
+  <data name="Temp" xml:space="preserve"><value>Temp</value></data>
+  <data name="Normal" xml:space="preserve"><value>Normal</value></data>
+  <data name="Warning" xml:space="preserve"><value>Warning</value></data>
+  <data name="Critical" xml:space="preserve"><value>Critical</value></data>
+  <data name="InvalidRequest" xml:space="preserve"><value>The request contains an invalid value.</value></data>
+  <data name="Band0" xml:space="preserve"><value>&lt; 90</value></data>
+  <data name="Band1" xml:space="preserve"><value>in 90–93</value></data>
+  <data name="Band2" xml:space="preserve"><value>in 94–95</value></data>
+  <data name="Band3" xml:space="preserve"><value>in 96–100</value></data>
+  <data name="Band4" xml:space="preserve"><value>&lt; 40</value></data>
+  <data name="Band5" xml:space="preserve"><value>&gt; 140</value></data>
+  <data name="Band6" xml:space="preserve"><value>in 40–49</value></data>
+  <data name="Band7" xml:space="preserve"><value>in 121–140</value></data>
+  <data name="Band8" xml:space="preserve"><value>in 50–59</value></data>
+  <data name="Band9" xml:space="preserve"><value>in 101–120</value></data>
+  <data name="Band10" xml:space="preserve"><value>in 60–100</value></data>
+  <data name="Band11" xml:space="preserve"><value>&lt; 80</value></data>
+  <data name="Band12" xml:space="preserve"><value>≥ 220</value></data>
+  <data name="Band13" xml:space="preserve"><value>in 80–89</value></data>
+  <data name="Band14" xml:space="preserve"><value>in 180–219</value></data>
+  <data name="Band15" xml:space="preserve"><value>in 90–99</value></data>
+  <data name="Band16" xml:space="preserve"><value>in 160–179</value></data>
+  <data name="Band17" xml:space="preserve"><value>in 100–159</value></data>
+  <data name="Band18" xml:space="preserve"><value>&lt; 35.0</value></data>
+  <data name="Band19" xml:space="preserve"><value>≥ 41.0</value></data>
+  <data name="Band20" xml:space="preserve"><value>in [35.0, 35.5)</value></data>
+  <data name="Band21" xml:space="preserve"><value>in [39.5, 41.0)</value></data>
+  <data name="Band22" xml:space="preserve"><value>in [35.5, 36.0)</value></data>
+  <data name="Band23" xml:space="preserve"><value>in [38.0, 39.5)</value></data>
+  <data name="Band24" xml:space="preserve"><value>in [36.0, 38.0)</value></data>
+</root>
+

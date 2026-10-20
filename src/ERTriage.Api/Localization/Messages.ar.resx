@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <data name="Required" xml:space="preserve"><value>{0} مطلوب.</value></data>
+  <data name="TextLength" xml:space="preserve"><value>يجب أن يكون طول {0} بين {1} و{2} حرفًا.</value></data>
+  <data name="TextMaxLength" xml:space="preserve"><value>يجب ألا يتجاوز طول {0} عدد {1} حرفًا.</value></data>
+  <data name="Range" xml:space="preserve"><value>يجب أن تكون قيمة {0} بين {1} و{2}{3}.</value></data>
+  <data name="DecimalRange" xml:space="preserve"><value>يجب أن تكون قيمة {0} بين {1:0.0} و{2:0.0}{3}.</value></data>
+  <data name="FullName" xml:space="preserve"><value>الاسم الكامل</value></data>
+  <data name="Age" xml:space="preserve"><value>العمر</value></data>
+  <data name="ChiefComplaint" xml:space="preserve"><value>الشكوى الرئيسية</value></data>
+  <data name="HeartRate" xml:space="preserve"><value>معدل ضربات القلب</value></data>
+  <data name="SystolicBp" xml:space="preserve"><value>ضغط الدم الانقباضي</value></data>
+  <data name="DiastolicBp" xml:space="preserve"><value>ضغط الدم الانبساطي</value></data>
+  <data name="Temperature" xml:space="preserve"><value>درجة الحرارة</value></data>
+  <data name="SpO2" xml:space="preserve"><value>تشبع الأكسجين</value></data>
+  <data name="Priority" xml:space="preserve"><value>الأولوية</value></data>
+  <data name="OverrideReason" xml:space="preserve"><value>سبب تعديل الأولوية</value></data>
+  <data name="OverriddenBy" xml:space="preserve"><value>اسم معدّل الأولوية</value></data>
+  <data name="DispositionNote" xml:space="preserve"><value>ملاحظة الخروج أو التنويم</value></data>
+  <data name="Years" xml:space="preserve"><value> سنة</value></data>
+  <data name="Bpm" xml:space="preserve"><value> نبضة/دقيقة</value></data>
+  <data name="MmHg" xml:space="preserve"><value> ملم زئبق</value></data>
+  <data name="Celsius" xml:space="preserve"><value> °م</value></data>
+  <data name="Percent" xml:space="preserve"><value> %</value></data>
+  <data name="BodyRequired" xml:space="preserve"><value>محتوى الطلب مطلوب.</value></data>
+  <data name="RequestRequired" xml:space="preserve"><value>الطلب مطلوب.</value></data>
+  <data name="TargetRequired" xml:space="preserve"><value>الحالة المستهدفة مطلوبة.</value></data>
+  <data name="TargetInvalid" xml:space="preserve"><value>الحالة المستهدفة ليست حالة مريض صالحة.</value></data>
+  <data name="StatusInvalid" xml:space="preserve"><value>يجب أن تكون الحالة إحدى حالات المريض الصالحة.</value></data>
+  <data name="DispositionNotAllowed" xml:space="preserve"><value>لا يُسمح بملاحظة الخروج أو التنويم إلا عند إخراج المريض أو تنويمه.</value></data>
+  <data name="BpOrder" xml:space="preserve"><value>يجب أن يكون ضغط الدم الانبساطي أقل من ضغط الدم الانقباضي.</value></data>
+  <data name="TemperaturePrecision" xml:space="preserve"><value>يجب ألا تحتوي درجة الحرارة على أكثر من منزلة عشرية واحدة.</value></data>
+  <data name="ArrivalRequired" xml:space="preserve"><value>وقت الوصول مطلوب.</value></data>
+  <data name="ArrivalFuture" xml:space="preserve"><value>لا يمكن أن يتجاوز وقت الوصول الوقت الحالي بأكثر من {0} دقائق.</value></data>
+  <data name="VitalsRequired" xml:space="preserve"><value>العلامات الحيوية مطلوبة.</value></data>
+  <data name="PriorityRange" xml:space="preserve"><value>يجب أن تكون الأولوية بين {0} و{1}.</value></data>
+  <data name="PageNumberMin" xml:space="preserve"><value>يجب ألا يقل رقم الصفحة عن {0}.</value></data>
+  <data name="PageSizeRange" xml:space="preserve"><value>يجب أن يكون حجم الصفحة بين 1 و{0}.</value></data>
+  <data name="ConcurrencyConflict" xml:space="preserve"><value>عدّل مستخدم آخر السجل. أعد تحميله ثم حاول مجددًا.</value></data>
+  <data name="ValidationFailed" xml:space="preserve"><value>فشل التحقق من صحة البيانات.</value></data>
+  <data name="PatientNotFound" xml:space="preserve"><value>لم يتم العثور على المريض.</value></data>
+  <data name="UnexpectedError" xml:space="preserve"><value>حدث خطأ غير متوقع.</value></data>
+  <data name="InvalidTransition" xml:space="preserve"><value>لا يمكن تغيير الحالة من {0} إلى {1}.</value></data>
+  <data name="StatusConflict" xml:space="preserve"><value>لا يمكن {0} بينما حالة المريض هي {1}.</value></data>
+  <data name="Waiting" xml:space="preserve"><value>في الانتظار</value></data>
+  <data name="InTreatment" xml:space="preserve"><value>قيد العلاج</value></data>
+  <data name="Discharged" xml:space="preserve"><value>خرج من المستشفى</value></data>
+  <data name="Admitted" xml:space="preserve"><value>تم التنويم</value></data>
+  <data name="OverrideOperation" xml:space="preserve"><value>تعديل الأولوية</value></data>
+  <data name="AllNormal" xml:space="preserve"><value>جميع العلامات الحيوية المُقيّمة ضمن النطاقات الطبيعية</value></data>
+  <data name="HR" xml:space="preserve"><value>معدل ضربات القلب</value></data>
+  <data name="SBP" xml:space="preserve"><value>ضغط الدم الانقباضي</value></data>
+  <data name="Temp" xml:space="preserve"><value>درجة الحرارة</value></data>
+  <data name="Normal" xml:space="preserve"><value>طبيعي</value></data>
+  <data name="Warning" xml:space="preserve"><value>تنبيه</value></data>
+  <data name="Critical" xml:space="preserve"><value>حرج</value></data>
+  <data name="InvalidRequest" xml:space="preserve"><value>يحتوي الطلب على قيمة غير صالحة.</value></data>
+  <data name="Band0" xml:space="preserve"><value>أقل من 90</value></data>
+  <data name="Band1" xml:space="preserve"><value>ضمن 90–93</value></data>
+  <data name="Band2" xml:space="preserve"><value>ضمن 94–95</value></data>
+  <data name="Band3" xml:space="preserve"><value>ضمن 96–100</value></data>
+  <data name="Band4" xml:space="preserve"><value>أقل من 40</value></data>
+  <data name="Band5" xml:space="preserve"><value>أكبر من 140</value></data>
+  <data name="Band6" xml:space="preserve"><value>ضمن 40–49</value></data>
+  <data name="Band7" xml:space="preserve"><value>ضمن 121–140</value></data>
+  <data name="Band8" xml:space="preserve"><value>ضمن 50–59</value></data>
+  <data name="Band9" xml:space="preserve"><value>ضمن 101–120</value></data>
+  <data name="Band10" xml:space="preserve"><value>ضمن 60–100</value></data>
+  <data name="Band11" xml:space="preserve"><value>أقل من 80</value></data>
+  <data name="Band12" xml:space="preserve"><value>أكبر من أو يساوي 220</value></data>
+  <data name="Band13" xml:space="preserve"><value>ضمن 80–89</value></data>
+  <data name="Band14" xml:space="preserve"><value>ضمن 180–219</value></data>
+  <data name="Band15" xml:space="preserve"><value>ضمن 90–99</value></data>
+  <data name="Band16" xml:space="preserve"><value>ضمن 160–179</value></data>
+  <data name="Band17" xml:space="preserve"><value>ضمن 100–159</value></data>
+  <data name="Band18" xml:space="preserve"><value>أقل من 35.0</value></data>
+  <data name="Band19" xml:space="preserve"><value>أكبر من أو يساوي 41.0</value></data>
+  <data name="Band20" xml:space="preserve"><value>ضمن [35.0, 35.5)</value></data>
+  <data name="Band21" xml:space="preserve"><value>ضمن [39.5, 41.0)</value></data>
+  <data name="Band22" xml:space="preserve"><value>ضمن [35.5, 36.0)</value></data>
+  <data name="Band23" xml:space="preserve"><value>ضمن [38.0, 39.5)</value></data>
+  <data name="Band24" xml:space="preserve"><value>ضمن [36.0, 38.0)</value></data>
+</root>
+

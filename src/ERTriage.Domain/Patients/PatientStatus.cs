@@ -1,9 +1,11 @@
+using ERTriage.Domain.Common;
+
 namespace ERTriage.Domain.Patients;
 
 public enum PatientStatus
 {
-    Waiting,
-    InTreatment,
-    Discharged,
-    Admitted
+    [MessageKey("Waiting")] Waiting,
+    [MessageKey("InTreatment")] InTreatment,
+    [MessageKey("Discharged")] Discharged,
+    [MessageKey("Admitted")] Admitted
 }

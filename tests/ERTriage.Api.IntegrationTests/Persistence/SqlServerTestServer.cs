@@ -69,7 +69,8 @@ internal static class SqlServerTestServer
             command.CommandText = "SELECT 1";
             command.ExecuteScalar();
         }
-        catch (Exception ex) when (ex is SqlException or InvalidOperationException or TimeoutException)
+        // PlatformNotSupportedException: the shipped fallback is LocalDB, which exists on Windows only.
+        catch (Exception ex) when (ex is SqlException or InvalidOperationException or TimeoutException or PlatformNotSupportedException)
         {
             return ServerInfo.Unavailable(Describe(ex));
         }

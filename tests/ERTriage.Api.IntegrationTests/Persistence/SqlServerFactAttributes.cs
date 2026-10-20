@@ -35,3 +35,17 @@ public sealed class D38ExperimentFactAttribute : FactAttribute
         }
     }
 }
+
+/// <summary>The theory counterpart of <see cref="SqlServerFactAttribute"/> with the same skip/mandatory rules.</summary>
+public sealed class SqlServerTheoryAttribute : TheoryAttribute
+{
+    public SqlServerTheoryAttribute()
+    {
+        var reason = SqlServerTestServer.SkipReason(Environment.GetEnvironmentVariable);
+
+        if (reason is not null)
+        {
+            Skip = reason;
+        }
+    }
+}

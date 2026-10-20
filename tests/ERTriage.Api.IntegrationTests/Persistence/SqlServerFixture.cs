@@ -1,4 +1,6 @@
+using ERTriage.Infrastructure.Persistence;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 
 namespace ERTriage.Api.IntegrationTests.Persistence;
 
@@ -6,8 +8,8 @@ namespace ERTriage.Api.IntegrationTests.Persistence;
 /// One isolated, empty SQL Server database per test run, named <c>ERTriage_Test_{8 hex}</c> (D-47). The fixture only
 /// ever opens two databases: <c>master</c> (to create and drop) and the database it generated. It refuses any name that
 /// is not a generated test name, so the Development database, the API's <c>ERTriage_Test</c> database and any
-/// Production database can never be created, modified or dropped by it. The schema is not created here (migrations
-/// arrive in S5/S6).
+/// Production database can never be created, modified or dropped by it. The schema is not created here; <see cref="EnsureSchemaAsync"/> applies the real
+/// migrations on demand, only to this generated database (S6).
 ///
 /// When no server is reachable: the tests are skipped by <see cref="SqlServerFactAttribute"/> unless they are
 /// mandatory (CI or <c>ERTRIAGE_REQUIRE_SQLSERVER=true</c>), in which case initialization throws and every test in the
@@ -15,7 +17,9 @@ namespace ERTriage.Api.IntegrationTests.Persistence;
 /// </summary>
 public sealed class SqlServerFixture : IAsyncLifetime
 {
+    private readonly SemaphoreSlim _schemaLock = new(1, 1);
     private string? _adminConnectionString;
+    private bool _schemaApplied;
 
     public bool IsAvailable { get; private set; }
 
@@ -89,6 +93,37 @@ public sealed class SqlServerFixture : IAsyncLifetime
         {
             await connection.DisposeAsync();
             throw;
+        }
+    }
+
+    /// <summary>Applies the real EF Core migrations to the generated database once. Safe to call repeatedly.</summary>
+    public async Task EnsureSchemaAsync(CancellationToken cancellationToken = default)
+    {
+        if (!IsAvailable)
+        {
+            throw new InvalidOperationException("SQL Server is not available; this test should have been skipped.");
+        }
+
+        await _schemaLock.WaitAsync(cancellationToken);
+
+        try
+        {
+            if (_schemaApplied)
+            {
+                return;
+            }
+
+            EnsureSafe(DatabaseName);
+
+            var options = new DbContextOptionsBuilder<ErTriageDbContext>().UseSqlServer(ConnectionString).Options;
+            await using var context = new ErTriageDbContext(options);
+            await context.Database.MigrateAsync(cancellationToken);
+
+            _schemaApplied = true;
+        }
+        finally
+        {
+            _schemaLock.Release();
         }
     }
 

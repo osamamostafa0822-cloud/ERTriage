@@ -1,4 +1,4 @@
-using System.Globalization;
+using ERTriage.Domain.Common;
 
 namespace ERTriage.Domain.Common;
 
@@ -6,26 +6,26 @@ namespace ERTriage.Domain.Common;
 internal static class Guard
 {
     /// <summary>Trims <paramref name="value"/>; it must be non-empty and within the length bounds.</summary>
-    public static string RequiredText(string? value, string label, int minLength, int maxLength)
+    public static string RequiredText(string? value, MessageDescriptor label, int minLength, int maxLength)
     {
         var trimmed = value?.Trim();
 
         if (string.IsNullOrEmpty(trimmed))
         {
-            throw new DomainValidationException($"{label} is required.");
+            throw new DomainValidationException(MessageCatalog.Format("Required", label));
         }
 
         if (trimmed.Length < minLength || trimmed.Length > maxLength)
         {
             throw new DomainValidationException(
-                FormattableString.Invariant($"{label} must be between {minLength} and {maxLength} characters."));
+                MessageCatalog.Format("TextLength", label, minLength, maxLength));
         }
 
         return trimmed;
     }
 
     /// <summary>Trims <paramref name="value"/>; blank becomes null; otherwise it must fit <paramref name="maxLength"/>.</summary>
-    public static string? OptionalText(string? value, string label, int maxLength)
+    public static string? OptionalText(string? value, MessageDescriptor label, int maxLength)
     {
         var trimmed = value?.Trim();
 
@@ -37,29 +37,27 @@ internal static class Guard
         if (trimmed.Length > maxLength)
         {
             throw new DomainValidationException(
-                FormattableString.Invariant($"{label} must be at most {maxLength} characters."));
+                MessageCatalog.Format("TextMaxLength", label, maxLength));
         }
 
         return trimmed;
     }
 
-    public static void InRange(int value, int min, int max, string label, string unit = "")
+    public static void InRange(int value, int min, int max, MessageDescriptor label, MessageDescriptor? unit = null)
     {
         if (value < min || value > max)
         {
             throw new DomainValidationException(
-                FormattableString.Invariant($"{label} must be between {min} and {max}{unit}."));
+                MessageCatalog.Format("Range", label, min, max, (object?)unit ?? ""));
         }
     }
 
-    public static void InRange(decimal value, decimal min, decimal max, string label, string unit = "")
+    public static void InRange(decimal value, decimal min, decimal max, MessageDescriptor label, MessageDescriptor? unit = null)
     {
         if (value < min || value > max)
         {
             throw new DomainValidationException(
-                string.Create(
-                    CultureInfo.InvariantCulture,
-                    $"{label} must be between {min:0.0} and {max:0.0}{unit}."));
+                MessageCatalog.Format("DecimalRange", label, min, max, (object?)unit ?? ""));
         }
     }
 }

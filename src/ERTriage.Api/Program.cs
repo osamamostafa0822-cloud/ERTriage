@@ -24,6 +24,7 @@ if (ApiConfiguration.IsMigrateOnStartupEnabled(app.Configuration))
         .MigrateAsync(app.Lifetime.ApplicationStopping);
 }
 
+app.UseRequestLocalization();
 app.UseExceptionHandler();
 app.UseCors(ApiDependencyInjection.CorsPolicyName);
 

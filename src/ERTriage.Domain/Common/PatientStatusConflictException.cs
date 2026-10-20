@@ -1,3 +1,4 @@
+using ERTriage.Domain.Common;
 namespace ERTriage.Domain.Common;
 
 /// <summary>
@@ -7,7 +8,7 @@ namespace ERTriage.Domain.Common;
 public sealed class PatientStatusConflictException : DomainException
 {
     public PatientStatusConflictException(string operation, string status)
-        : base($"Cannot {operation} while the patient is {status}.")
+        : base(MessageCatalog.Format("StatusConflict", operation == "override priority" ? (object)MessageCatalog.Get("OverrideOperation") : operation, MessageCatalog.Status(status)))
     {
         Operation = operation;
         Status = status;

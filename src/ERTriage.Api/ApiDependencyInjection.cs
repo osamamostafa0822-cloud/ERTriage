@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using ERTriage.Api.Localization;
 using ERTriage.Api.Configuration;
 using ERTriage.Api.Documentation;
 using ERTriage.Api.ExceptionHandling;
@@ -19,6 +20,7 @@ public static class ApiDependencyInjection
         IHostEnvironment environment)
     {
         ApiConfiguration.Validate(configuration, environment);
+        services.AddTranslationResources();
 
         services
             .AddControllers()

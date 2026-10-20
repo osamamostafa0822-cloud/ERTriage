@@ -1,3 +1,4 @@
+using ERTriage.Domain.Common;
 using ERTriage.Application.Common;
 using ERTriage.Application.Patients.Requests;
 using ERTriage.Domain.Patients;
@@ -15,32 +16,32 @@ public static class RegisterPatientRequestValidator
     {
         if (request is null)
         {
-            return [new ApiError(null, "Request body is required.")];
+            return [new ApiError(null, MessageCatalog.Get("BodyRequired"))];
         }
 
         var errors = new FieldErrors();
 
-        errors.RequiredText("fullName", "Full name", request.FullName, PatientRules.FullNameMinLength, PatientRules.FullNameMaxLength);
-        errors.Range("age", "Age", request.Age, PatientRules.AgeMin, PatientRules.AgeMax, " years");
-        errors.RequiredText("chiefComplaint", "Chief complaint", request.ChiefComplaint, PatientRules.ChiefComplaintMinLength, PatientRules.ChiefComplaintMaxLength);
+        errors.RequiredText("fullName", MessageCatalog.Get("FullName"), request.FullName, PatientRules.FullNameMinLength, PatientRules.FullNameMaxLength);
+        errors.Range("age", MessageCatalog.Get("Age"), request.Age, PatientRules.AgeMin, PatientRules.AgeMax, MessageCatalog.Get("Years"));
+        errors.RequiredText("chiefComplaint", MessageCatalog.Get("ChiefComplaint"), request.ChiefComplaint, PatientRules.ChiefComplaintMinLength, PatientRules.ChiefComplaintMaxLength);
 
-        errors.Range("heartRate", "Heart rate", request.HeartRate, VitalSignsLimits.HeartRateMin, VitalSignsLimits.HeartRateMax, " bpm");
-        var systolicValid = errors.Range("systolicBp", "Systolic blood pressure", request.SystolicBp, VitalSignsLimits.SystolicBpMin, VitalSignsLimits.SystolicBpMax, " mmHg");
-        var diastolicValid = errors.Range("diastolicBp", "Diastolic blood pressure", request.DiastolicBp, VitalSignsLimits.DiastolicBpMin, VitalSignsLimits.DiastolicBpMax, " mmHg");
+        errors.Range("heartRate", MessageCatalog.Get("HeartRate"), request.HeartRate, VitalSignsLimits.HeartRateMin, VitalSignsLimits.HeartRateMax, MessageCatalog.Get("Bpm"));
+        var systolicValid = errors.Range("systolicBp", MessageCatalog.Get("SystolicBp"), request.SystolicBp, VitalSignsLimits.SystolicBpMin, VitalSignsLimits.SystolicBpMax, MessageCatalog.Get("MmHg"));
+        var diastolicValid = errors.Range("diastolicBp", MessageCatalog.Get("DiastolicBp"), request.DiastolicBp, VitalSignsLimits.DiastolicBpMin, VitalSignsLimits.DiastolicBpMax, MessageCatalog.Get("MmHg"));
 
         if (systolicValid && diastolicValid && request.DiastolicBp >= request.SystolicBp)
         {
-            errors.Add("diastolicBp", "Diastolic blood pressure must be lower than systolic blood pressure.");
+            errors.Add("diastolicBp", MessageCatalog.Get("BpOrder"));
         }
 
-        var temperatureValid = errors.Range("temperatureC", "Temperature", request.TemperatureC, VitalSignsLimits.TemperatureCMin, VitalSignsLimits.TemperatureCMax, " °C");
+        var temperatureValid = errors.Range("temperatureC", MessageCatalog.Get("Temperature"), request.TemperatureC, VitalSignsLimits.TemperatureCMin, VitalSignsLimits.TemperatureCMax, MessageCatalog.Get("Celsius"));
 
         if (temperatureValid && request.TemperatureC is { } temperature && decimal.Round(temperature, 1) != temperature)
         {
-            errors.Add("temperatureC", "Temperature must have at most one decimal place.");
+            errors.Add("temperatureC", MessageCatalog.Get("TemperaturePrecision"));
         }
 
-        errors.Range("spO2", "SpO2", request.SpO2, VitalSignsLimits.SpO2Min, VitalSignsLimits.SpO2Max, " %");
+        errors.Range("spO2", MessageCatalog.Get("SpO2"), request.SpO2, VitalSignsLimits.SpO2Min, VitalSignsLimits.SpO2Max, MessageCatalog.Get("Percent"));
 
         ValidateArrivalTime(request.ArrivalTime, now, errors);
 
@@ -61,7 +62,7 @@ public static class RegisterPatientRequestValidator
     {
         if (arrivalTime is not { } arrival)
         {
-            errors.Add("arrivalTime", "Arrival time is required.");
+            errors.Add("arrivalTime", MessageCatalog.Get("ArrivalRequired"));
             return;
         }
 
@@ -69,8 +70,7 @@ public static class RegisterPatientRequestValidator
         {
             errors.Add(
                 "arrivalTime",
-                FormattableString.Invariant(
-                    $"Arrival time cannot be more than {(int)PatientRules.ArrivalFutureTolerance.TotalMinutes} minutes in the future."));
+                MessageCatalog.Format("ArrivalFuture", (int)PatientRules.ArrivalFutureTolerance.TotalMinutes));
         }
     }
 }

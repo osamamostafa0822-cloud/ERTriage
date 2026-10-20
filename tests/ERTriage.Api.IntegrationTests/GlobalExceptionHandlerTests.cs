@@ -24,7 +24,7 @@ public class GlobalExceptionHandlerTests
         };
         context.Response.Body = new MemoryStream();
 
-        var handler = new GlobalExceptionHandler(NullLogger<GlobalExceptionHandler>.Instance);
+        var handler = new GlobalExceptionHandler(NullLogger<GlobalExceptionHandler>.Instance, LocalizationTestServices.Translator);
         var handled = await handler.TryHandleAsync(context, exception, CancellationToken.None);
 
         Assert.True(handled);

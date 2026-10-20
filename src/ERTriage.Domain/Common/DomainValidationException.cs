@@ -6,4 +6,8 @@ public sealed class DomainValidationException : DomainException
     public DomainValidationException(string message) : base(message)
     {
     }
+
+    public DomainValidationException(MessageDescriptor message) : base(message)
+    {
+    }
 }

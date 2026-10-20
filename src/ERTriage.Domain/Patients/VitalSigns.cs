@@ -25,20 +25,20 @@ public sealed record VitalSigns
 
     public static VitalSigns Create(int heartRate, int systolicBp, int diastolicBp, decimal temperatureC, int spO2)
     {
-        Guard.InRange(heartRate, VitalSignsLimits.HeartRateMin, VitalSignsLimits.HeartRateMax, "Heart rate", " bpm");
-        Guard.InRange(systolicBp, VitalSignsLimits.SystolicBpMin, VitalSignsLimits.SystolicBpMax, "Systolic blood pressure", " mmHg");
-        Guard.InRange(diastolicBp, VitalSignsLimits.DiastolicBpMin, VitalSignsLimits.DiastolicBpMax, "Diastolic blood pressure", " mmHg");
-        Guard.InRange(temperatureC, VitalSignsLimits.TemperatureCMin, VitalSignsLimits.TemperatureCMax, "Temperature", " °C");
-        Guard.InRange(spO2, VitalSignsLimits.SpO2Min, VitalSignsLimits.SpO2Max, "SpO2", " %");
+        Guard.InRange(heartRate, VitalSignsLimits.HeartRateMin, VitalSignsLimits.HeartRateMax, MessageCatalog.Get("HeartRate"), MessageCatalog.Get("Bpm"));
+        Guard.InRange(systolicBp, VitalSignsLimits.SystolicBpMin, VitalSignsLimits.SystolicBpMax, MessageCatalog.Get("SystolicBp"), MessageCatalog.Get("MmHg"));
+        Guard.InRange(diastolicBp, VitalSignsLimits.DiastolicBpMin, VitalSignsLimits.DiastolicBpMax, MessageCatalog.Get("DiastolicBp"), MessageCatalog.Get("MmHg"));
+        Guard.InRange(temperatureC, VitalSignsLimits.TemperatureCMin, VitalSignsLimits.TemperatureCMax, MessageCatalog.Get("Temperature"), MessageCatalog.Get("Celsius"));
+        Guard.InRange(spO2, VitalSignsLimits.SpO2Min, VitalSignsLimits.SpO2Max, MessageCatalog.Get("SpO2"), MessageCatalog.Get("Percent"));
 
         if (diastolicBp >= systolicBp)
         {
-            throw new DomainValidationException("Diastolic blood pressure must be lower than systolic blood pressure.");
+            throw new DomainValidationException(MessageCatalog.Get("BpOrder"));
         }
 
         if (decimal.Round(temperatureC, 1) != temperatureC)
         {
-            throw new DomainValidationException("Temperature must have at most one decimal place.");
+            throw new DomainValidationException(MessageCatalog.Get("TemperaturePrecision"));
         }
 
         return new VitalSigns

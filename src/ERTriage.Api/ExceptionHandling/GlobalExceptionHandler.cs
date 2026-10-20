@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using ERTriage.Api.Localization;
 using ERTriage.Application.Common;
 using ERTriage.Domain.Common;
 using Microsoft.AspNetCore.Diagnostics;
@@ -15,15 +16,16 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
     /// <summary>Non-standard status used by proxies for "client closed request".</summary>
     private const int ClientClosedRequest = 499;
 
-    private const string UnexpectedErrorMessage = "An unexpected error occurred.";
 
     private static readonly IReadOnlyList<ApiError> NoErrors = Array.Empty<ApiError>();
 
     private readonly ILogger<GlobalExceptionHandler> _logger;
+    private readonly MessageLocalizer _localizer;
 
-    public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger)
+    public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger, MessageLocalizer localizer)
     {
         _logger = logger;
+        _localizer = localizer;
     }
 
     public async ValueTask<bool> TryHandleAsync(
@@ -65,15 +67,21 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
         return true;
     }
 
-    private static (int StatusCode, string Message, IReadOnlyList<ApiError> Errors) Map(Exception exception) =>
+    private (int StatusCode, string Message, IReadOnlyList<ApiError> Errors) Map(Exception exception) =>
         exception switch
         {
-            ValidationException ex => (StatusCodes.Status400BadRequest, ex.Message, ex.Errors),
-            DomainValidationException ex => (StatusCodes.Status400BadRequest, ex.Message, NoErrors),
-            NotFoundException ex => (StatusCodes.Status404NotFound, ex.Message, NoErrors),
-            InvalidStatusTransitionException ex => (StatusCodes.Status409Conflict, ex.Message, NoErrors),
-            PatientStatusConflictException ex => (StatusCodes.Status409Conflict, ex.Message, NoErrors),
-            ConcurrencyConflictException ex => (StatusCodes.Status409Conflict, ex.Message, NoErrors),
-            _ => (StatusCodes.Status500InternalServerError, UnexpectedErrorMessage, NoErrors)
+            ValidationException ex => (StatusCodes.Status400BadRequest, _localizer.Get("ValidationFailed"),
+                ex.Errors.Select(error => new ApiError(error.Field,
+                    error.Description is { } description ? _localizer.Localize(description) : error.Message)).ToArray()),
+            DomainValidationException ex => (StatusCodes.Status400BadRequest, Localize(ex), NoErrors),
+            NotFoundException ex => (StatusCodes.Status404NotFound,
+                ex.Description is { } description ? _localizer.Localize(description) : ex.Message, NoErrors),
+            InvalidStatusTransitionException ex => (StatusCodes.Status409Conflict, Localize(ex), NoErrors),
+            PatientStatusConflictException ex => (StatusCodes.Status409Conflict, Localize(ex), NoErrors),
+            ConcurrencyConflictException => (StatusCodes.Status409Conflict, _localizer.Get("ConcurrencyConflict"), NoErrors),
+            _ => (StatusCodes.Status500InternalServerError, _localizer.Get("UnexpectedError"), NoErrors)
         };
+
+    private string Localize(DomainException exception) =>
+        exception.Description is { } description ? _localizer.Localize(description) : exception.Message;
 }

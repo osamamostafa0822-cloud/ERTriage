@@ -1,3 +1,4 @@
+using ERTriage.Domain.Common;
 using ERTriage.Application.Common;
 using ERTriage.Application.Patients.Dtos;
 using ERTriage.Application.Patients.Requests;
@@ -66,7 +67,7 @@ public sealed class PatientRegistrationService : IPatientRegistrationService
     public async Task<PatientDto> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         var patient = await _repository.GetByIdReadOnlyAsync(id, cancellationToken)
-            ?? throw new NotFoundException("Patient was not found.");
+            ?? throw new NotFoundException(MessageCatalog.Get("PatientNotFound"));
 
         return PatientMapper.ToDto(patient);
     }

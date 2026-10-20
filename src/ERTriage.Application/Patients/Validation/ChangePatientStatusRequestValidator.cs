@@ -1,3 +1,4 @@
+using ERTriage.Domain.Common;
 using ERTriage.Application.Common;
 using ERTriage.Application.Patients.Requests;
 using ERTriage.Domain.Patients;
@@ -15,20 +16,20 @@ public static class ChangePatientStatusRequestValidator
     {
         if (request is null)
         {
-            return [new ApiError(null, "Request body is required.")];
+            return [new ApiError(null, MessageCatalog.Get("BodyRequired"))];
         }
 
         var errors = new FieldErrors();
 
         if (request.TargetStatus is not { } target)
         {
-            errors.Add("targetStatus", "Target status is required.");
+            errors.Add("targetStatus", MessageCatalog.Get("TargetRequired"));
             return errors.ToList();
         }
 
         if (!Enum.IsDefined(target))
         {
-            errors.Add("targetStatus", "Target status is not a valid patient status.");
+            errors.Add("targetStatus", MessageCatalog.Get("TargetInvalid"));
             return errors.ToList();
         }
 
@@ -38,14 +39,14 @@ public static class ChangePatientStatusRequestValidator
             case PatientStatus.Admitted:
                 errors.RequiredText(
                     "dispositionNote",
-                    "Disposition note",
+                    MessageCatalog.Get("DispositionNote"),
                     request.DispositionNote,
                     PatientRules.DispositionNoteMinLength,
                     PatientRules.DispositionNoteMaxLength);
                 break;
 
             case PatientStatus.InTreatment when !string.IsNullOrWhiteSpace(request.DispositionNote):
-                errors.Add("dispositionNote", "A disposition note is only allowed when discharging or admitting.");
+                errors.Add("dispositionNote", MessageCatalog.Get("DispositionNotAllowed"));
                 break;
         }
 

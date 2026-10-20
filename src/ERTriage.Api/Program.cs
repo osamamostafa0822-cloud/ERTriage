@@ -33,3 +33,6 @@ app.MapHealthChecks("/health");
 app.MapApiDocumentation(); // OpenAPI + Scalar, only when ApiDocumentation:Enabled
 
 app.Run();
+
+// Makes the entry point visible to WebApplicationFactory<Program> (HTTP integration tests, M4 P4).
+public partial class Program;

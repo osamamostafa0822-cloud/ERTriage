@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using ERTriage.Application.Common;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
@@ -32,7 +33,7 @@ public static class LocalizationExtensions
                     .Select(entry => new ApiError(entry.Key, localizer.Get("InvalidRequest")))
                     .ToArray();
                 return new BadRequestObjectResult(GeneralResponse<object>.Fail(
-                    localizer.Get("ValidationFailed"), errors, context.HttpContext.TraceIdentifier));
+                    localizer.Get("ValidationFailed"), errors, Activity.Current?.Id ?? context.HttpContext.TraceIdentifier));
             };
         });
         return services;

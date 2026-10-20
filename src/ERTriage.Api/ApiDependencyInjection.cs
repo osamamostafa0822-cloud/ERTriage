@@ -20,11 +20,15 @@ public static class ApiDependencyInjection
         IHostEnvironment environment)
     {
         ApiConfiguration.Validate(configuration, environment);
-        services.AddTranslationResources();
 
         services
             .AddControllers()
             .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+        // Must come after AddControllers: MVC registers its own ApiBehaviorOptionsSetup there, and options setups run in
+        // registration order, so an earlier InvalidModelStateResponseFactory would be overwritten by the default
+        // ProblemDetails factory (which also echoes framework messages such as type names). Guarded by ApiBehaviorWiringTests.
+        services.AddTranslationResources();
 
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddProblemDetails(); // required by UseExceptionHandler()

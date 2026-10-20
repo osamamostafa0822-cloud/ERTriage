@@ -13,6 +13,7 @@ public static class ApiConfiguration
     public const string AllowedOriginsKey = "Cors:AllowedOrigins";
     public const string ApiDocumentationEnabledKey = "ApiDocumentation:Enabled";
     public const string MigrateOnStartupKey = "Database:MigrateOnStartup";
+    public const string SeedDevelopmentDataKey = "Database:SeedDevelopmentData";
 
     private static readonly string[] SupportedEnvironments =
         [Environments.Development, TestEnvironment, Environments.Production];
@@ -26,6 +27,14 @@ public static class ApiConfiguration
     /// <summary>Whether pending migrations are applied at startup. Missing or unparseable values mean <c>false</c>.</summary>
     public static bool IsMigrateOnStartupEnabled(IConfiguration configuration) =>
         bool.TryParse(configuration[MigrateOnStartupKey], out var enabled) && enabled;
+
+    /// <summary>
+    /// Whether the fictional Development seed runs at startup. Missing or unparseable values mean <c>false</c>.
+    /// <c>Program.cs</c> additionally requires the Development environment; <see cref="Validate"/> rejects <c>true</c>
+    /// everywhere else (D-45, D-58).
+    /// </summary>
+    public static bool IsSeedDevelopmentDataEnabled(IConfiguration configuration) =>
+        bool.TryParse(configuration[SeedDevelopmentDataKey], out var enabled) && enabled;
 
     /// <summary>Extracts the database name ("Database" or "Initial Catalog") without any SQL Server dependency.</summary>
     public static bool TryGetDatabaseName(string connectionString, out string? databaseName)
@@ -61,6 +70,7 @@ public static class ApiConfiguration
         var environmentName = environment.EnvironmentName;
         var isTest = IsEnvironment(environmentName, TestEnvironment);
         var isProduction = IsEnvironment(environmentName, Environments.Production);
+        var isDevelopment = IsEnvironment(environmentName, Environments.Development);
 
         if (!SupportedEnvironments.Contains(environmentName, StringComparer.OrdinalIgnoreCase))
         {
@@ -70,6 +80,7 @@ public static class ApiConfiguration
         ValidateAllowedOrigins(configuration, isProduction, errors);
         ValidateConnectionString(configuration, isTest, isProduction, errors);
         ValidateMigrateOnStartup(configuration, isProduction, errors);
+        ValidateSeedDevelopmentData(configuration, isDevelopment, errors);
 
         if (errors.Count > 0)
         {
@@ -142,6 +153,27 @@ public static class ApiConfiguration
         if (isProduction && IsMigrateOnStartupEnabled(configuration))
         {
             errors.Add($"'{MigrateOnStartupKey}' must not be enabled in Production; apply migrations as an explicit deployment step.");
+        }
+    }
+
+    private static void ValidateSeedDevelopmentData(IConfiguration configuration, bool isDevelopment, List<string> errors)
+    {
+        var value = configuration[SeedDevelopmentDataKey];
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return;
+        }
+
+        if (!bool.TryParse(value, out _))
+        {
+            errors.Add($"'{SeedDevelopmentDataKey}' must be true or false.");
+            return;
+        }
+
+        // Fictional seed data only ever goes into a Development database (D-45); this also covers environment variables.
+        if (!isDevelopment && IsSeedDevelopmentDataEnabled(configuration))
+        {
+            errors.Add($"'{SeedDevelopmentDataKey}' can only be enabled in the Development environment.");
         }
     }
 

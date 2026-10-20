@@ -15,4 +15,18 @@
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Development seed data (D-58): copied to the build and publish output of this project and of every project that
+         references it (the Api), at Persistence/Seed/Data/fictional-patients.json. -->
+    <None Update="Persistence\Seed\Data\fictional-patients.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Seed loader/validator/factory are internal; their tests live in the integration test project. -->
+    <InternalsVisibleTo Include="ERTriage.Api.IntegrationTests" />
+  </ItemGroup>
+
 </Project>

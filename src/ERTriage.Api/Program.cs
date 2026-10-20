@@ -1,8 +1,7 @@
 using ERTriage.Api;
-using ERTriage.Api.Configuration;
 using ERTriage.Api.Documentation;
+using ERTriage.Api.Startup;
 using ERTriage.Application;
-using ERTriage.Application.Common;
 using ERTriage.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,15 +13,8 @@ builder.Services
 
 var app = builder.Build();
 
-// Development convenience (D-44, D-45): apply pending migrations once, awaited, before the first request.
-// Off by default; rejected by configuration validation in Production. `dotnet ef` stops the host at Build(),
-// so this never runs while generating migrations.
-if (ApiConfiguration.IsMigrateOnStartupEnabled(app.Configuration))
-{
-    await using var scope = app.Services.CreateAsyncScope();
-    await scope.ServiceProvider.GetRequiredService<IDatabaseInitializer>()
-        .MigrateAsync(app.Lifetime.ApplicationStopping);
-}
+// Migrations (when enabled) then the Development-only seed (when enabled): ERTriage.Api.Startup.
+await app.InitializeDatabaseAsync();
 
 app.UseRequestLocalization();
 app.UseExceptionHandler();

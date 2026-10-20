@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.SignalR;
+using ERTriage.Application.Patients.Notifications;
 
 namespace ERTriage.Api.Realtime;
 

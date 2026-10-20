@@ -1,8 +1,8 @@
 using ERTriage.Application.Common;
-using ERTriage.Application.Triage;
 using ERTriage.Domain.Patients;
+using ERTriage.Application.Triage.Queries;
 
-namespace ERTriage.Application.Patients;
+namespace ERTriage.Application.Patients.Repositories;
 
 /// <summary>
 /// Persistence port of the <see cref="Patient"/> aggregate (docs/02-architecture/repository-and-unit-of-work.md).

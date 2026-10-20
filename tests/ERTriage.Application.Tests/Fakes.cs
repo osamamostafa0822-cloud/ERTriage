@@ -1,7 +1,8 @@
 using ERTriage.Application.Common;
-using ERTriage.Application.Patients;
-using ERTriage.Application.Triage;
 using ERTriage.Domain.Patients;
+using ERTriage.Application.Patients.Notifications;
+using ERTriage.Application.Patients.Repositories;
+using ERTriage.Application.Triage.Queries;
 
 namespace ERTriage.Application.Tests;
 

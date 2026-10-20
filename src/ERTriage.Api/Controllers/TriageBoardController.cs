@@ -1,8 +1,9 @@
 using ERTriage.Application.Common;
-using ERTriage.Application.Triage;
 using ERTriage.Application.Triage.Dtos;
 using ERTriage.Domain.Patients;
 using Microsoft.AspNetCore.Mvc;
+using ERTriage.Application.Triage.Requests;
+using ERTriage.Application.Triage.Services;
 
 namespace ERTriage.Api.Controllers;
 

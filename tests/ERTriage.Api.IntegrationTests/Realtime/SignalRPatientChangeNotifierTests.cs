@@ -1,7 +1,6 @@
 using System.Text.Json;
 using ERTriage.Api.Realtime;
 using ERTriage.Application;
-using ERTriage.Application.Patients;
 using ERTriage.Domain.Patients;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
@@ -10,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting.Internal;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using ERTriage.Application.Patients.Notifications;
 
 namespace ERTriage.Api.IntegrationTests.Realtime;
 

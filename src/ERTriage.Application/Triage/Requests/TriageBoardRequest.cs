@@ -1,7 +1,7 @@
 using ERTriage.Application.Common;
 using ERTriage.Domain.Patients;
 
-namespace ERTriage.Application.Triage;
+namespace ERTriage.Application.Triage.Requests;
 
 /// <summary>
 /// Query of <c>GET /api/triage-board</c>. No <c>Statuses</c> means the default Waiting + InTreatment (applied by the

@@ -4,8 +4,6 @@ using ERTriage.Api.Configuration;
 using ERTriage.Api.IntegrationTests.Seed;
 using ERTriage.Application;
 using ERTriage.Application.Common;
-using ERTriage.Application.Patients;
-using ERTriage.Application.Triage;
 using ERTriage.Domain.Common;
 using ERTriage.Domain.Patients;
 using ERTriage.Infrastructure;
@@ -15,6 +13,8 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using ERTriage.Application.Patients.Repositories;
+using ERTriage.Application.Triage.Queries;
 
 namespace ERTriage.Api.IntegrationTests.Persistence;
 

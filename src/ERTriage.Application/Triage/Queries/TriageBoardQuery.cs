@@ -1,7 +1,7 @@
 using ERTriage.Application.Common;
 using ERTriage.Domain.Patients;
 
-namespace ERTriage.Application.Triage;
+namespace ERTriage.Application.Triage.Queries;
 
 /// <summary>
 /// Input of the triage-board read (docs/03-features/triage-board.md). An empty <see cref="Statuses"/> means

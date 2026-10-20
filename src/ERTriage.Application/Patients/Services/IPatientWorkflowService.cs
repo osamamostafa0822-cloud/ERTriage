@@ -1,7 +1,7 @@
 using ERTriage.Application.Patients.Dtos;
 using ERTriage.Application.Patients.Requests;
 
-namespace ERTriage.Application.Patients;
+namespace ERTriage.Application.Patients.Services;
 
 /// <summary>
 /// Changes to an existing patient: status transitions and priority overrides (D-06). Both load the patient tracked,

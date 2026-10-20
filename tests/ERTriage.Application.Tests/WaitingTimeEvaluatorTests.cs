@@ -1,5 +1,5 @@
-using ERTriage.Application.Triage;
 using ERTriage.Domain.Patients;
+using ERTriage.Application.Triage.Waiting;
 
 namespace ERTriage.Application.Tests;
 

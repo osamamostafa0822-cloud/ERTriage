@@ -1,8 +1,8 @@
 using ERTriage.Application.Common;
-using ERTriage.Application.Patients;
 using ERTriage.Application.Patients.Dtos;
 using ERTriage.Application.Patients.Requests;
 using Microsoft.AspNetCore.Mvc;
+using ERTriage.Application.Patients.Services;
 
 namespace ERTriage.Api.Controllers;
 

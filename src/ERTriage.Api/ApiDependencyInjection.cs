@@ -4,8 +4,8 @@ using ERTriage.Api.Configuration;
 using ERTriage.Api.Documentation;
 using ERTriage.Api.ExceptionHandling;
 using ERTriage.Api.Realtime;
-using ERTriage.Application.Patients;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using ERTriage.Application.Patients.Notifications;
 
 namespace ERTriage.Api;
 

@@ -2,11 +2,12 @@ using System.Net;
 using System.Text.RegularExpressions;
 using ERTriage.Api.IntegrationTests.Persistence;
 using ERTriage.Application.Common;
-using ERTriage.Application.Triage;
 using ERTriage.Application.Triage.Dtos;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using ERTriage.Application.Triage.Requests;
+using ERTriage.Application.Triage.Services;
 
 namespace ERTriage.Api.IntegrationTests.Http;
 

@@ -1,11 +1,14 @@
 using ERTriage.Application.Common;
 using ERTriage.Application.Triage.Dtos;
 using ERTriage.Application.Triage.Validation;
-using ERTriage.Application.Patients;
 using ERTriage.Domain.Patients;
 using Microsoft.Extensions.Logging;
+using ERTriage.Application.Patients.Repositories;
+using ERTriage.Application.Triage.Mapping;
+using ERTriage.Application.Triage.Queries;
+using ERTriage.Application.Triage.Requests;
 
-namespace ERTriage.Application.Triage;
+namespace ERTriage.Application.Triage.Services;
 
 /// <summary>
 /// Reads one board page. Filtering, ordering (priority, arrival time, Id) and paging are done by the repository in

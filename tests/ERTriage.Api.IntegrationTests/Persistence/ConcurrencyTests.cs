@@ -1,12 +1,12 @@
 using System.Text.Json;
 using ERTriage.Api.ExceptionHandling;
 using ERTriage.Application.Common;
-using ERTriage.Application.Patients;
 using ERTriage.Domain.Patients;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using ERTriage.Application.Patients.Repositories;
 
 namespace ERTriage.Api.IntegrationTests.Persistence;
 

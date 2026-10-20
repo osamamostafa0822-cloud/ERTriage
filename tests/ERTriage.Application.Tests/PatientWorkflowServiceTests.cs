@@ -1,9 +1,10 @@
 using ERTriage.Application.Common;
-using ERTriage.Application.Patients;
 using ERTriage.Application.Patients.Requests;
 using ERTriage.Domain.Common;
 using ERTriage.Domain.Patients;
 using Microsoft.Extensions.Logging;
+using ERTriage.Application.Patients.Notifications;
+using ERTriage.Application.Patients.Services;
 
 namespace ERTriage.Application.Tests;
 

@@ -1,6 +1,6 @@
-using ERTriage.Application.Triage;
 using ERTriage.Domain.Patients;
 using ERTriage.Infrastructure.Persistence.Seed;
+using ERTriage.Application.Triage.Waiting;
 
 namespace ERTriage.Api.IntegrationTests.Seed;
 

@@ -1,6 +1,6 @@
 using ERTriage.Domain.Patients;
 
-namespace ERTriage.Application.Triage;
+namespace ERTriage.Application.Triage.Waiting;
 
 /// <summary>Result of the waiting-time rule: whole minutes (null when there is no indicator) and the level.</summary>
 public sealed record WaitingTime(int? Minutes, WaitingLevel Level);

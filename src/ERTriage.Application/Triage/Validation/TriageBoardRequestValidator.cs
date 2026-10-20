@@ -1,6 +1,7 @@
 using ERTriage.Domain.Common;
 using ERTriage.Application.Common;
 using ERTriage.Domain.Triage;
+using ERTriage.Application.Triage.Requests;
 
 namespace ERTriage.Application.Triage.Validation;
 

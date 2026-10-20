@@ -5,10 +5,8 @@ using System.Text.Json;
 using ERTriage.Api.ExceptionHandling;
 using ERTriage.Api.Localization;
 using ERTriage.Application.Common;
-using ERTriage.Application.Patients;
 using ERTriage.Application.Patients.Requests;
 using ERTriage.Application.Patients.Validation;
-using ERTriage.Application.Triage;
 using ERTriage.Domain.Common;
 using ERTriage.Domain.Patients;
 using Microsoft.AspNetCore.Builder;
@@ -20,6 +18,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
+using ERTriage.Application.Patients.Mapping;
+using ERTriage.Application.Triage.Mapping;
 
 namespace ERTriage.Api.IntegrationTests;
 

@@ -1,7 +1,7 @@
 using ERTriage.Application.Patients.Dtos;
 using ERTriage.Domain.Patients;
 
-namespace ERTriage.Application.Patients;
+namespace ERTriage.Application.Patients.Mapping;
 
 /// <summary>Explicit manual mapping from the aggregate to its public DTO (no mapping library, D-14).</summary>
 public static class PatientMapper

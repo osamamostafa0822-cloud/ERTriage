@@ -1,7 +1,8 @@
-using ERTriage.Application.Patients;
-using ERTriage.Application.Triage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using ERTriage.Application.Patients.Notifications;
+using ERTriage.Application.Patients.Services;
+using ERTriage.Application.Triage.Services;
 
 namespace ERTriage.Application;
 

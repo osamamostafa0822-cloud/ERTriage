@@ -1,7 +1,7 @@
 using ERTriage.Application.Patients.Dtos;
 using ERTriage.Application.Patients.Requests;
 
-namespace ERTriage.Application.Patients;
+namespace ERTriage.Application.Patients.Services;
 
 /// <summary>Registers arriving patients and reads one patient back (docs/03-features/patient-registration.md).</summary>
 public interface IPatientRegistrationService

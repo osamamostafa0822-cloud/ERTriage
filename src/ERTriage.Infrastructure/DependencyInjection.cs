@@ -1,5 +1,4 @@
 using ERTriage.Application.Common;
-using ERTriage.Application.Patients;
 using ERTriage.Infrastructure.Persistence;
 using ERTriage.Infrastructure.Persistence.Repositories;
 using ERTriage.Infrastructure.Persistence.Seed;
@@ -7,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using ERTriage.Application.Patients.Repositories;
 
 namespace ERTriage.Infrastructure;
 

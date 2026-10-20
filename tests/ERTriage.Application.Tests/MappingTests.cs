@@ -1,8 +1,9 @@
-using ERTriage.Application.Patients;
 using ERTriage.Application.Patients.Dtos;
-using ERTriage.Application.Triage;
 using ERTriage.Application.Triage.Dtos;
 using ERTriage.Domain.Patients;
+using ERTriage.Application.Patients.Mapping;
+using ERTriage.Application.Triage.Mapping;
+using ERTriage.Application.Triage.Waiting;
 
 namespace ERTriage.Application.Tests;
 

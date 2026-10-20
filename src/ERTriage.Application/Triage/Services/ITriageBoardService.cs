@@ -1,7 +1,8 @@
 using ERTriage.Application.Common;
 using ERTriage.Application.Triage.Dtos;
+using ERTriage.Application.Triage.Requests;
 
-namespace ERTriage.Application.Triage;
+namespace ERTriage.Application.Triage.Services;
 
 /// <summary>The prioritized queue (docs/03-features/triage-board.md). Throws <c>ValidationException</c> (400) for a bad filter or page.</summary>
 public interface ITriageBoardService

@@ -1,7 +1,9 @@
 using ERTriage.Application.Common;
-using ERTriage.Application.Triage;
 using ERTriage.Domain.Patients;
 using Microsoft.Extensions.Logging;
+using ERTriage.Application.Triage.Requests;
+using ERTriage.Application.Triage.Services;
+using ERTriage.Application.Triage.Waiting;
 
 namespace ERTriage.Application.Tests;
 

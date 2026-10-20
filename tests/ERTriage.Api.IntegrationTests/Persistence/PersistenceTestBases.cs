@@ -1,9 +1,9 @@
 using System.Data;
 using ERTriage.Application.Common;
-using ERTriage.Application.Patients;
 using ERTriage.Domain.Patients;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
+using ERTriage.Application.Patients.Repositories;
 
 namespace ERTriage.Api.IntegrationTests.Persistence;
 

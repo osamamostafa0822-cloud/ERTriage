@@ -5,8 +5,11 @@ using ERTriage.Application.Patients.Requests;
 using ERTriage.Application.Patients.Validation;
 using ERTriage.Domain.Patients;
 using Microsoft.Extensions.Logging;
+using ERTriage.Application.Patients.Mapping;
+using ERTriage.Application.Patients.Notifications;
+using ERTriage.Application.Patients.Repositories;
 
-namespace ERTriage.Application.Patients;
+namespace ERTriage.Application.Patients.Services;
 
 /// <summary>
 /// Status change and priority override. The request is validated first (400), then the patient is loaded (404);

@@ -1,11 +1,12 @@
 using ERTriage.Application;
 using ERTriage.Application.Common;
-using ERTriage.Application.Patients;
-using ERTriage.Application.Triage;
 using ERTriage.Infrastructure;
 using ERTriage.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using ERTriage.Application.Patients.Repositories;
+using ERTriage.Application.Patients.Services;
+using ERTriage.Application.Triage.Services;
 
 namespace ERTriage.Api.IntegrationTests;
 

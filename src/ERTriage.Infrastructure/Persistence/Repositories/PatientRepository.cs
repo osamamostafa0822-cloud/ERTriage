@@ -1,9 +1,9 @@
 using ERTriage.Application.Common;
-using ERTriage.Application.Patients;
-using ERTriage.Application.Triage;
 using ERTriage.Domain.Patients;
 using ERTriage.Infrastructure.Persistence.Pagination;
 using Microsoft.EntityFrameworkCore;
+using ERTriage.Application.Patients.Repositories;
+using ERTriage.Application.Triage.Queries;
 
 namespace ERTriage.Infrastructure.Persistence.Repositories;
 

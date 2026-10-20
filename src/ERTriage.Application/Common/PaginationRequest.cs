@@ -15,7 +15,8 @@ public record PaginationRequest(
     /// <summary>Number of rows to skip. Only meaningful after <see cref="EnsureValid"/> succeeded.</summary>
     public int Skip => (int)Math.Min((long)(PageNumber - 1) * PageSize, int.MaxValue);
 
-    public void EnsureValid()
+    /// <summary>The validation errors of this request (empty when valid). Lets validators collect them with other fields' errors.</summary>
+    public IReadOnlyList<ApiError> GetErrors()
     {
         List<ApiError> errors = [];
 
@@ -28,6 +29,13 @@ public record PaginationRequest(
         {
             errors.Add(new ApiError("pageSize", $"Page size must be between 1 and {MaxPageSize}."));
         }
+
+        return errors;
+    }
+
+    public void EnsureValid()
+    {
+        var errors = GetErrors();
 
         if (errors.Count > 0)
         {

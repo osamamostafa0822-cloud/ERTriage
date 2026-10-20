@@ -12,6 +12,7 @@ public static class ApiConfiguration
     public const string ConnectionStringKey = "ConnectionStrings:ErTriage";
     public const string AllowedOriginsKey = "Cors:AllowedOrigins";
     public const string ApiDocumentationEnabledKey = "ApiDocumentation:Enabled";
+    public const string MigrateOnStartupKey = "Database:MigrateOnStartup";
 
     private static readonly string[] SupportedEnvironments =
         [Environments.Development, TestEnvironment, Environments.Production];
@@ -21,6 +22,10 @@ public static class ApiConfiguration
 
     public static bool IsApiDocumentationEnabled(IConfiguration configuration) =>
         configuration.GetValue<bool>(ApiDocumentationEnabledKey);
+
+    /// <summary>Whether pending migrations are applied at startup. Missing or unparseable values mean <c>false</c>.</summary>
+    public static bool IsMigrateOnStartupEnabled(IConfiguration configuration) =>
+        bool.TryParse(configuration[MigrateOnStartupKey], out var enabled) && enabled;
 
     /// <summary>Extracts the database name ("Database" or "Initial Catalog") without any SQL Server dependency.</summary>
     public static bool TryGetDatabaseName(string connectionString, out string? databaseName)
@@ -64,6 +69,7 @@ public static class ApiConfiguration
 
         ValidateAllowedOrigins(configuration, isProduction, errors);
         ValidateConnectionString(configuration, isTest, isProduction, errors);
+        ValidateMigrateOnStartup(configuration, isProduction, errors);
 
         if (errors.Count > 0)
         {
@@ -115,6 +121,27 @@ public static class ApiConfiguration
         if (isProduction && UsesLocalDb(connectionString))
         {
             errors.Add($"'{ConnectionStringKey}' must not point to LocalDB in Production.");
+        }
+    }
+
+    private static void ValidateMigrateOnStartup(IConfiguration configuration, bool isProduction, List<string> errors)
+    {
+        var value = configuration[MigrateOnStartupKey];
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return;
+        }
+
+        if (!bool.TryParse(value, out _))
+        {
+            errors.Add($"'{MigrateOnStartupKey}' must be true or false.");
+            return;
+        }
+
+        // Production never migrates automatically (D-45); the check also covers values from environment variables.
+        if (isProduction && IsMigrateOnStartupEnabled(configuration))
+        {
+            errors.Add($"'{MigrateOnStartupKey}' must not be enabled in Production; apply migrations as an explicit deployment step.");
         }
     }
 

@@ -1,5 +1,6 @@
 using ERTriage.Domain.Patients;
 using ERTriage.Infrastructure.Persistence.Converters;
+using ERTriage.Infrastructure.Persistence.Seed;
 using Microsoft.EntityFrameworkCore;
 
 namespace ERTriage.Infrastructure.Persistence;
@@ -15,6 +16,9 @@ public sealed class ErTriageDbContext : DbContext
     }
 
     public DbSet<Patient> Patients => Set<Patient>();
+
+    /// <summary>Development seed markers (D-58). Empty in every environment except a seeded Development database.</summary>
+    public DbSet<DevelopmentSeedRecord> DevelopmentSeedRecords => Set<DevelopmentSeedRecord>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {

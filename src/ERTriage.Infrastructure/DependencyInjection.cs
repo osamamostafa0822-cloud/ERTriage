@@ -2,9 +2,11 @@ using ERTriage.Application.Common;
 using ERTriage.Application.Patients;
 using ERTriage.Infrastructure.Persistence;
 using ERTriage.Infrastructure.Persistence.Repositories;
+using ERTriage.Infrastructure.Persistence.Seed;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace ERTriage.Infrastructure;
 
@@ -32,6 +34,11 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IPatientRepository, PatientRepository>();
         services.AddScoped<IDatabaseInitializer, DatabaseInitializer>();
+
+        // Development seed (D-44, D-58). Registered everywhere; it only runs when Program.cs gates it in Development.
+        // TryAdd: tests may register their own options (short lock timeout, custom data file) first.
+        services.TryAddSingleton(new DevelopmentSeedOptions());
+        services.AddScoped<IDevelopmentDataSeeder, DevelopmentDataSeeder>();
 
         return services;
     }

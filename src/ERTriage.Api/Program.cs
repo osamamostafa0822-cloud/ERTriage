@@ -24,6 +24,15 @@ if (ApiConfiguration.IsMigrateOnStartupEnabled(app.Configuration))
         .MigrateAsync(app.Lifetime.ApplicationStopping);
 }
 
+// Development only (D-44, D-45, D-58): fictional demo patients, after migrations. Two independent gates: the
+// environment and the flag (Validate already rejects the flag outside Development). Idempotent and lock-protected.
+if (app.Environment.IsDevelopment() && ApiConfiguration.IsSeedDevelopmentDataEnabled(app.Configuration))
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    await scope.ServiceProvider.GetRequiredService<IDevelopmentDataSeeder>()
+        .SeedAsync(app.Lifetime.ApplicationStopping);
+}
+
 app.UseRequestLocalization();
 app.UseExceptionHandler();
 app.UseCors(ApiDependencyInjection.CorsPolicyName);

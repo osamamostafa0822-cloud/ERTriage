@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "patients": [
+    {
+      "seedKey": "alpha",
+      "fullName": "Test Patient Alpha",
+      "age": 54,
+      "chiefComplaint": "Shortness of breath",
+      "vitals": { "heartRate": 80, "systolicBp": 120, "diastolicBp": 80, "temperatureC": 36.8, "spO2": 86 },
+      "arrivedMinutesAgo": 8,
+      "status": "Waiting"
+    },
+    {
+      "seedKey": "bravo",
+      "fullName": "Test Patient Bravo",
+      "age": 61,
+      "chiefComplaint": "Palpitations and chest discomfort",
+      "vitals": { "heartRate": 150, "systolicBp": 120, "diastolicBp": 80, "temperatureC": 36.8, "spO2": 98 },
+      "arrivedMinutesAgo": 40,
+      "status": "InTreatment",
+      "treatmentStartedMinutesAfterArrival": 10
+    },
+    {
+      "seedKey": "charlie",
+      "fullName": "Test Patient Charlie",
+      "age": 72,
+      "chiefComplaint": "Dizziness and weakness",
+      "vitals": { "heartRate": 80, "systolicBp": 85, "diastolicBp": 55, "temperatureC": 36.8, "spO2": 98 },
+      "arrivedMinutesAgo": 35,
+      "status": "Waiting"
+    },
+    {
+      "seedKey": "delta",
+      "fullName": "Test Patient Delta",
+      "age": 35,
+      "chiefComplaint": "Fever and chills",
+      "vitals": { "heartRate": 80, "systolicBp": 120, "diastolicBp": 80, "temperatureC": 39.8, "spO2": 98 },
+      "arrivedMinutesAgo": 65,
+      "status": "Waiting"
+    },
+    {
+      "seedKey": "echo",
+      "fullName": "Test Patient Echo",
+      "age": 68,
+      "chiefComplaint": "Cough and breathlessness",
+      "vitals": { "heartRate": 80, "systolicBp": 120, "diastolicBp": 80, "temperatureC": 36.8, "spO2": 92 },
+      "arrivedMinutesAgo": 90,
+      "status": "InTreatment",
+      "treatmentStartedMinutesAfterArrival": 20
+    },
+    {
+      "seedKey": "foxtrot",
+      "fullName": "Test Patient Foxtrot",
+      "age": 45,
+      "chiefComplaint": "Racing heartbeat after exercise",
+      "vitals": { "heartRate": 110, "systolicBp": 120, "diastolicBp": 80, "temperatureC": 36.8, "spO2": 98 },
+      "arrivedMinutesAgo": 50,
+      "status": "Waiting"
+    },
+    {
+      "seedKey": "golf",
+      "fullName": "Test Patient Golf",
+      "age": 23,
+      "chiefComplaint": "Sore throat and fever",
+      "vitals": { "heartRate": 80, "systolicBp": 120, "diastolicBp": 80, "temperatureC": 38.5, "spO2": 98 },
+      "arrivedMinutesAgo": 15,
+      "status": "Waiting"
+    },
+    {
+      "seedKey": "hotel",
+      "fullName": "Test Patient Hotel",
+      "age": 58,
+      "chiefComplaint": "Severe headache",
+      "vitals": { "heartRate": 80, "systolicBp": 170, "diastolicBp": 95, "temperatureC": 36.8, "spO2": 98 },
+      "arrivedMinutesAgo": 100,
+      "status": "Waiting"
+    },
+    {
+      "seedKey": "india",
+      "fullName": "Test Patient India",
+      "age": 30,
+      "chiefComplaint": "Abdominal pain",
+      "vitals": { "heartRate": 80, "systolicBp": 120, "diastolicBp": 80, "temperatureC": 36.8, "spO2": 98 },
+      "arrivedMinutesAgo": 25,
+      "status": "Waiting",
+      "priorityOverride": {
+        "priority": 2,
+        "reason": "Pain escalating on reassessment",
+        "overriddenBy": "Nurse (fictional)",
+        "minutesAfterArrival": 5
+      }
+    },
+    {
+      "seedKey": "juliet",
+      "fullName": "Test Patient Juliet",
+      "age": 27,
+      "chiefComplaint": "Minor hand laceration",
+      "vitals": { "heartRate": 80, "systolicBp": 120, "diastolicBp": 80, "temperatureC": 36.8, "spO2": 98 },
+      "arrivedMinutesAgo": 75,
+      "status": "Waiting"
+    },
+    {
+      "seedKey": "kilo",
+      "fullName": "Test Patient Kilo",
+      "age": 49,
+      "chiefComplaint": "Mild asthma symptoms",
+      "vitals": { "heartRate": 80, "systolicBp": 120, "diastolicBp": 80, "temperatureC": 36.8, "spO2": 95 },
+      "arrivedMinutesAgo": 120,
+      "status": "Discharged",
+      "treatmentStartedMinutesAfterArrival": 15,
+      "completedMinutesAfterArrival": 60,
+      "dispositionNote": "Treated and discharged with follow-up advice."
+    },
+    {
+      "seedKey": "lima",
+      "fullName": "Test Patient Lima",
+      "age": 77,
+      "chiefComplaint": "Confusion and low oxygen",
+      "vitals": { "heartRate": 80, "systolicBp": 120, "diastolicBp": 80, "temperatureC": 36.8, "spO2": 88 },
+      "arrivedMinutesAgo": 110,
+      "status": "Admitted",
+      "treatmentStartedMinutesAfterArrival": 5,
+      "completedMinutesAfterArrival": 50,
+      "dispositionNote": "Admitted to the medical ward for observation."
+    }
+  ]
+}

@@ -125,6 +125,29 @@ namespace ERTriage.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("ERTriage.Infrastructure.Persistence.Seed.DevelopmentSeedRecord", b =>
+                {
+                    b.Property<string>("SeedKey")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("SeededAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("SeedKey")
+                        .HasName("PK_DevelopmentSeedRecords");
+
+                    b.HasIndex("PatientId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_DevelopmentSeedRecords_PatientId");
+
+                    b.ToTable("DevelopmentSeedRecords", (string)null);
+                });
+
             modelBuilder.Entity("ERTriage.Domain.Patients.Patient", b =>
                 {
                     b.OwnsOne("ERTriage.Domain.Patients.VitalSigns", "Vitals", b1 =>
@@ -163,6 +186,16 @@ namespace ERTriage.Infrastructure.Persistence.Migrations
 
                     b.Navigation("Vitals")
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("ERTriage.Infrastructure.Persistence.Seed.DevelopmentSeedRecord", b =>
+                {
+                    b.HasOne("ERTriage.Domain.Patients.Patient", null)
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_DevelopmentSeedRecords_Patients_PatientId");
                 });
 #pragma warning restore 612, 618
         }

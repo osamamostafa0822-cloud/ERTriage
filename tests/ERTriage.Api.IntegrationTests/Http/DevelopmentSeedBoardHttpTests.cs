@@ -1,7 +1,10 @@
 using ERTriage.Api.IntegrationTests.Persistence;
 using ERTriage.Api.IntegrationTests.Seed;
 using ERTriage.Application.Common;
+using ERTriage.Infrastructure.Persistence;
+using ERTriage.Infrastructure.Persistence.Seed;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace ERTriage.Api.IntegrationTests.Http;
 
@@ -48,11 +51,37 @@ public sealed class DevelopmentSeedBoardHttpTests(ApiTestFixture fixture)
         Assert.Equal(10, (await GetBoardAsync()).GetProperty("totalCount").GetInt32());
     }
 
-    // The Test host registers the seeder (it is only *invoked* by Program.cs in Development), with the fixed clock.
-    private async Task<DevelopmentSeedResult> SeedThroughTheHostAsync()
+    [SqlServerFact]
+    public async Task Board_AfterSeedingTheFullFile_PagesThroughEveryActivePatient()
+    {
+        await SeedThroughTheHostAsync(SeedTestData.ShippedFilePath);
+        var counts = SeedTestData.ShippedStatusCounts();
+        var expectedActive = counts["Waiting"] + counts["InTreatment"];
+        var lastPage = (expectedActive + 99) / 100;
+
+        var first = await GetBoardAsync("?pageSize=100");
+        Assert.Equal(expectedActive, first.GetProperty("totalCount").GetInt32());
+        Assert.Equal(100, first.GetProperty("items").GetArrayLength());
+
+        var last = await GetBoardAsync($"?pageSize=100&pageNumber={lastPage}");
+        Assert.Equal(expectedActive - (lastPage - 1) * 100, last.GetProperty("items").GetArrayLength());
+        Assert.Equal(0, (await GetBoardAsync($"?pageSize=100&pageNumber={lastPage + 1}")).GetProperty("items").GetArrayLength());
+
+        var completed = await GetBoardAsync("?status=Discharged&status=Admitted&pageSize=1");
+        Assert.Equal(counts["Discharged"] + counts["Admitted"], completed.GetProperty("totalCount").GetInt32());
+    }
+
+    // Runs the real seeder with the Test host's services (fixed clock, isolated database) and the chosen data file;
+    // the host itself never seeds (it is only invoked by Program.cs in Development).
+    private async Task<DevelopmentSeedResult> SeedThroughTheHostAsync(string? dataFile = null)
     {
         await using var scope = Fixture.Factory.Services.CreateAsyncScope();
-        return await scope.ServiceProvider.GetRequiredService<IDevelopmentDataSeeder>().SeedAsync(CancellationToken.None);
+        var seeder = new DevelopmentDataSeeder(
+            scope.ServiceProvider.GetRequiredService<ErTriageDbContext>(),
+            scope.ServiceProvider.GetRequiredService<TimeProvider>(),
+            new DevelopmentSeedOptions { DataFilePath = dataFile ?? SeedTestData.CuratedFilePath },
+            scope.ServiceProvider.GetRequiredService<ILogger<DevelopmentDataSeeder>>());
+        return await seeder.SeedAsync(CancellationToken.None);
     }
 }
 

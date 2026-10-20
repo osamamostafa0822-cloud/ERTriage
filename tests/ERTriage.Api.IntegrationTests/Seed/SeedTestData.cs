@@ -35,6 +35,32 @@ internal static class SeedTestData
     public static string ShippedFilePath =>
         Path.Combine(AppContext.BaseDirectory, "Persistence", "Seed", "Data", "fictional-patients.json");
 
+    /// <summary>The 12 curated demo keys (the generated volume rows use "vol-NNNNN", D-63).</summary>
+    public static readonly string[] CuratedKeys = CalculatedPriority.Keys.ToArray();
+
+    private static readonly Lazy<string> Curated = new(CreateCuratedFile);
+
+    /// <summary>
+    /// A seed file holding only the 12 curated records, copied from the shipped file. The approved board order and the
+    /// best-effort scenarios are defined on this set; the full shipped file is covered by its own tests.
+    /// </summary>
+    public static string CuratedFilePath => Curated.Value;
+
+    /// <summary>Number of records per status in the shipped file (computed from the file, not hard-coded).</summary>
+    public static IReadOnlyDictionary<string, int> ShippedStatusCounts() =>
+        ShippedRecords().GroupBy(r => (string)r["status"]!).ToDictionary(g => g.Key, g => g.Count());
+
+    public static IReadOnlyList<JsonObject> ShippedRecords() =>
+        JsonNode.Parse(System.IO.File.ReadAllText(ShippedFilePath))!["patients"]!.AsArray().Select(p => p!.AsObject()).ToList();
+
+    private static string CreateCuratedFile()
+    {
+        var curated = ShippedRecords().Where(r => CuratedKeys.Contains((string)r["seedKey"]!)).Select(r => r.DeepClone().AsObject());
+        var path = Path.Combine(Path.GetTempPath(), $"ertriage-curated-seed-{Environment.ProcessId}.json");
+        System.IO.File.WriteAllText(path, File(curated.ToArray()));
+        return path;
+    }
+
     /// <summary>A valid Waiting patient record as a mutable JSON object.</summary>
     public static JsonObject WaitingPatient(string key = "one") => new()
     {

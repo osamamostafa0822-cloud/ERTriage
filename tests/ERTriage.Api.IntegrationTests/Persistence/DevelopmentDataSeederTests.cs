@@ -123,7 +123,7 @@ public sealed class DevelopmentDataSeederTests(SqlServerFixture fixture) : Datab
         await SeedAsync(new DevelopmentSeedOptions { DataFilePath = broken });
         var before = await RowVersionsAsync();
 
-        var result = await SeedAsync(); // the corrected (shipped) file
+        var result = await SeedAsync(); // the corrected (curated) file
 
         AssertCounts(result, DevelopmentSeedOutcome.Completed, total: 12, inserted: 1, existing: 11, skipped: 0, failed: 0);
         var after = await RowVersionsAsync();
@@ -151,6 +151,7 @@ public sealed class DevelopmentDataSeederTests(SqlServerFixture fixture) : Datab
         var result = await SeedAsync(new DevelopmentSeedOptions { DataFilePath = path });
 
         Assert.Equal(DevelopmentSeedOutcome.Failed, result.Outcome);
+        Assert.Equal("MalformedDocument", result.DocumentErrorCode);
         Assert.Equal(0, await CountAsync("Patients"));
         Assert.Contains(_logs.Entries, e => e.Message.Contains("MalformedDocument", StringComparison.Ordinal));
     }
@@ -164,6 +165,7 @@ public sealed class DevelopmentDataSeederTests(SqlServerFixture fixture) : Datab
         var result = await SeedAsync(new DevelopmentSeedOptions { DataFilePath = TempFile(SeedTestData.File(bad)) });
 
         AssertCounts(result, DevelopmentSeedOutcome.Failed, total: 1, inserted: 0, existing: 0, skipped: 1, failed: 0);
+        Assert.False(result.IsDocumentFailure); // record-level, not document-level
         Assert.Equal(0, await CountAsync("Patients"));
     }
 
@@ -227,6 +229,34 @@ public sealed class DevelopmentDataSeederTests(SqlServerFixture fixture) : Datab
         Assert.Equal(0, await CountAsync("Patients"));
         Assert.Equal(0, await CountAsync("DevelopmentSeedRecords"));
         Assert.Contains(_logs.Entries, e => e.Message.Contains("failed fatally", StringComparison.Ordinal));
+    }
+
+    [SqlServerFact]
+    public async Task CancelledMidRun_PropagatesCancellation_CommitsNothing_AndIsNotLoggedAsFatal()
+    {
+        using var cts = new CancellationTokenSource();
+        await using var provider = BuildProvider();
+        await using var scope = provider.CreateAsyncScope();
+        var seeder = new DevelopmentDataSeeder(
+            scope.ServiceProvider.GetRequiredService<ErTriageDbContext>(),
+            _clock,
+            Curated(),
+            scope.ServiceProvider.GetRequiredService<ILogger<DevelopmentDataSeeder>>(),
+            (seed, now) =>
+            {
+                if (seed.SeedKey == "golf")
+                {
+                    cts.Cancel(); // the host starts stopping while records are being saved
+                }
+
+                return FictionalPatientFactory.Create(seed, now);
+            });
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => seeder.SeedAsync(cts.Token));
+
+        Assert.Equal(0, await CountAsync("Patients"));
+        Assert.Equal(0, await CountAsync("DevelopmentSeedRecords"));
+        Assert.DoesNotContain(_logs.Entries, e => e.Message.Contains("failed fatally", StringComparison.Ordinal));
     }
 
     // ---- restore by seed key (C3) -------------------------------------------------------------------------------
@@ -307,7 +337,7 @@ public sealed class DevelopmentDataSeederTests(SqlServerFixture fixture) : Datab
         {
             Assert.True(await GetAppLockAsync(holder, holderTransaction) >= 0);
 
-            var blocked = await SeedAsync(new DevelopmentSeedOptions { LockTimeout = TimeSpan.FromSeconds(1) });
+            var blocked = await SeedAsync(Curated(lockTimeout: TimeSpan.FromSeconds(1)));
 
             Assert.Equal(DevelopmentSeedOutcome.LockNotAcquired, blocked.Outcome);
             Assert.Equal(0, blocked.Inserted);
@@ -316,7 +346,7 @@ public sealed class DevelopmentDataSeederTests(SqlServerFixture fixture) : Datab
             await holderTransaction.RollbackAsync(); // releases the transaction-owned lock
         }
 
-        var released = await SeedAsync(new DevelopmentSeedOptions { LockTimeout = TimeSpan.FromSeconds(1) });
+        var released = await SeedAsync(Curated(lockTimeout: TimeSpan.FromSeconds(1)));
 
         Assert.Equal(12, released.Inserted);
     }
@@ -431,6 +461,76 @@ public sealed class DevelopmentDataSeederTests(SqlServerFixture fixture) : Datab
         }
     }
 
+    // ---- the full shipped file (5,012 records, D-63) ----
+
+    [SqlServerFact]
+    public async Task ShippedFile_InsertsEveryRecordInBatches_AndASecondRunWritesNothing()
+    {
+        var full = new DevelopmentSeedOptions { DataFilePath = SeedTestData.ShippedFilePath };
+
+        var first = await SeedAsync(full);
+        AssertCounts(first, DevelopmentSeedOutcome.Completed, total: 5012, inserted: 5012, existing: 0, skipped: 0, failed: 0);
+        Assert.Equal(5012, await CountAsync("Patients"));
+        Assert.Equal(5012, await CountAsync("DevelopmentSeedRecords"));
+
+        var second = await SeedAsync(full);
+        AssertCounts(second, DevelopmentSeedOutcome.AlreadyComplete, total: 5012, inserted: 0, existing: 5012, skipped: 0, failed: 0);
+    }
+
+    [SqlServerFact]
+    public async Task ShippedFile_BoardPagesAreOrderedCompleteAndWithoutDuplicates()
+    {
+        await SeedAsync(new DevelopmentSeedOptions { DataFilePath = SeedTestData.ShippedFilePath });
+        var counts = SeedTestData.ShippedStatusCounts();
+        var expectedActive = counts["Waiting"] + counts["InTreatment"];
+
+        await using var provider = BuildProvider();
+        await using var scope = provider.CreateAsyncScope();
+        var repository = scope.ServiceProvider.GetRequiredService<IPatientRepository>();
+        var rows = new List<Patient>();
+        for (var number = 1; ; number++)
+        {
+            var page = await repository.GetBoardPageAsync(
+                new TriageBoardQuery([PatientStatus.Waiting, PatientStatus.InTreatment], new PaginationRequest(number, 100)),
+                CancellationToken.None);
+            Assert.Equal(expectedActive, page.TotalCount);
+            if (page.Items.Count == 0) break;
+            rows.AddRange(page.Items);
+        }
+
+        Assert.Equal(expectedActive, rows.Count);
+        Assert.Equal(rows.Count, rows.Select(p => p.Id).Distinct().Count());
+        for (var i = 1; i < rows.Count; i++)
+        {
+            var (previous, current) = (rows[i - 1], rows[i]);
+            Assert.True(
+                previous.CurrentPriority < current.CurrentPriority
+                || (previous.CurrentPriority == current.CurrentPriority && previous.ArrivalTime <= current.ArrivalTime),
+                $"Board order broken at position {i}.");
+        }
+    }
+
+    [SqlServerFact]
+    public async Task SmallBatches_RecoverableErrorInOneBatch_LosesOnlyThatRecord()
+    {
+        var result = await SeedWithFactoryAsync(
+            (seed, now) =>
+            {
+                var patient = FictionalPatientFactory.Create(seed, now);
+                if (seed.SeedKey == "hotel")
+                {
+                    InsertConflictingRow(patient.Id);
+                }
+
+                return patient;
+            },
+            Curated(batchSize: 5));
+
+        AssertCounts(result, DevelopmentSeedOutcome.PartiallyCompleted, total: 12, inserted: 11, existing: 0, skipped: 0, failed: 1);
+        Assert.Equal(11, await CountAsync("DevelopmentSeedRecords"));
+        Assert.Equal(0, await ScalarIntAsync("SELECT COUNT(*) FROM DevelopmentSeedRecords WHERE SeedKey = 'hotel'"));
+    }
+
     // ---- helpers ------------------------------------------------------------------------------------------------
 
     private static void AssertCounts(DevelopmentSeedResult result, DevelopmentSeedOutcome outcome, int total, int inserted, int existing, int skipped, int failed)
@@ -440,6 +540,15 @@ public sealed class DevelopmentDataSeederTests(SqlServerFixture fixture) : Datab
             (result.Outcome, result.TotalRecords, result.Inserted, result.AlreadyExisting, result.Skipped, result.Failed));
         Assert.NotEqual(Guid.Empty, result.SeedRunId);
     }
+
+    /// <summary>Options for the 12 curated records (the approved demo set).</summary>
+    private static DevelopmentSeedOptions Curated(TimeSpan? lockTimeout = null, int? batchSize = null) =>
+        new()
+        {
+            DataFilePath = SeedTestData.CuratedFilePath,
+            LockTimeout = lockTimeout ?? TimeSpan.FromSeconds(30),
+            BatchSize = batchSize ?? 200
+        };
 
     private ServiceProvider BuildProvider(DevelopmentSeedOptions? options = null)
     {
@@ -456,7 +565,7 @@ public sealed class DevelopmentDataSeederTests(SqlServerFixture fixture) : Datab
                 builder.AddProvider(_logs);
             })
             .AddSingleton<TimeProvider>(_clock)
-            .AddSingleton(options ?? new DevelopmentSeedOptions())
+            .AddSingleton(options ?? Curated())
             .AddApplication()
             .AddInfrastructure(configuration)
             .BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true, ValidateOnBuild = true });
@@ -470,14 +579,16 @@ public sealed class DevelopmentDataSeederTests(SqlServerFixture fixture) : Datab
     }
 
     /// <summary>Runs the real seeder with a replaced patient factory (the internal test seam).</summary>
-    private async Task<DevelopmentSeedResult> SeedWithFactoryAsync(Func<ValidatedFictionalPatient, DateTimeOffset, Patient> factory)
+    private async Task<DevelopmentSeedResult> SeedWithFactoryAsync(
+        Func<ValidatedFictionalPatient, DateTimeOffset, Patient> factory,
+        DevelopmentSeedOptions? options = null)
     {
         await using var provider = BuildProvider();
         await using var scope = provider.CreateAsyncScope();
         var seeder = new DevelopmentDataSeeder(
             scope.ServiceProvider.GetRequiredService<ErTriageDbContext>(),
             _clock,
-            new DevelopmentSeedOptions(),
+            options ?? Curated(),
             scope.ServiceProvider.GetRequiredService<ILogger<DevelopmentDataSeeder>>(),
             factory);
         return await seeder.SeedAsync(CancellationToken.None);
@@ -485,7 +596,7 @@ public sealed class DevelopmentDataSeederTests(SqlServerFixture fixture) : Datab
 
     private string WriteSeedFile(Action<JsonArray> change)
     {
-        var document = JsonNode.Parse(File.ReadAllText(SeedTestData.ShippedFilePath))!.AsObject();
+        var document = JsonNode.Parse(File.ReadAllText(SeedTestData.CuratedFilePath))!.AsObject();
         change(document["patients"]!.AsArray());
         return TempFile(document.ToJsonString());
     }

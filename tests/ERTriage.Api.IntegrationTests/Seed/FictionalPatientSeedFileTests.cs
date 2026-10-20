@@ -15,16 +15,48 @@ public class FictionalPatientSeedFileTests
     }
 
     [Fact]
-    public async Task ShippedFile_LoadsTwelveFictionalPatientsWithUniqueStableKeys()
+    public async Task ShippedFile_Holds5012ValidFictionalRecords_TheTwelveCuratedFirst()
     {
         var result = await FictionalPatientSeedLoader.LoadAsync(SeedTestData.ShippedFilePath, CancellationToken.None);
-        var patients = result.Valid;
 
         Assert.Empty(result.Issues);
-        Assert.Equal(12, result.TotalRecords);
-        Assert.Equal(12, patients.Count);
-        Assert.Equal(SeedTestData.CalculatedPriority.Keys.Order(), patients.Select(p => p.SeedKey).Order());
-        Assert.All(patients, p => Assert.StartsWith("Test Patient ", p.FullName, StringComparison.Ordinal));
+        Assert.Equal(5012, result.TotalRecords);
+        Assert.Equal(5012, result.Valid.Count);
+        Assert.Equal(SeedTestData.CuratedKeys.Order(), result.Valid.Take(12).Select(p => p.SeedKey).Order());
+        Assert.Equal(
+            Enumerable.Range(1, 5000).Select(n => $"vol-{n:00000}"),
+            result.Valid.Skip(12).Select(p => p.SeedKey));
+        Assert.All(result.Valid, p => Assert.StartsWith("Test Patient ", p.FullName, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task CuratedFile_HoldsExactlyTheTwelveDemoPatients()
+    {
+        var result = await FictionalPatientSeedLoader.LoadAsync(SeedTestData.CuratedFilePath, CancellationToken.None);
+
+        Assert.Empty(result.Issues);
+        Assert.Equal(SeedTestData.CuratedKeys.Order(), result.Valid.Select(p => p.SeedKey).Order());
+    }
+
+    [Fact]
+    public async Task GeneratedRows_CoverEveryPriorityAndStatus_WithOrderedTimestamps()
+    {
+        var seeds = (await FictionalPatientSeedLoader.LoadAsync(SeedTestData.ShippedFilePath, CancellationToken.None)).Valid.Skip(12);
+        var now = SeedTestData.Now.UtcDateTime;
+        var patients = seeds.Select(s => FictionalPatientFactory.Create(s, SeedTestData.Now)).ToList();
+
+        Assert.Equal(5000, patients.Count);
+        Assert.Equal([1, 2, 3, 4], patients.Select(p => p.CalculatedPriority).Distinct().Order());
+        Assert.Equal(4, patients.Select(p => p.Status).Distinct().Count());
+        Assert.Contains(patients, p => p.IsOverridden);
+        Assert.Equal(5000, patients.Select(p => p.Id).Distinct().Count());
+        Assert.All(patients, p =>
+        {
+            Assert.InRange(p.ArrivalTime, now.AddHours(-24), now);
+            if (p.TreatmentStartedAt is { } started) Assert.InRange(started, p.ArrivalTime, now);
+            if (p.CompletedAt is { } completed) Assert.InRange(completed, p.TreatmentStartedAt!.Value, now);
+            if (p.OverriddenAt is { } overridden) Assert.InRange(overridden, p.ArrivalTime, p.CompletedAt ?? now);
+        });
     }
 
     [Fact]
@@ -108,7 +140,7 @@ public class FictionalPatientSeedFileTests
 
     private static async Task<Dictionary<string, Patient>> CreateAllAsync()
     {
-        var seeds = (await FictionalPatientSeedLoader.LoadAsync(SeedTestData.ShippedFilePath, CancellationToken.None)).Valid;
+        var seeds = (await FictionalPatientSeedLoader.LoadAsync(SeedTestData.CuratedFilePath, CancellationToken.None)).Valid;
         return seeds.ToDictionary(s => s.SeedKey, s => FictionalPatientFactory.Create(s, SeedTestData.Now));
     }
 }

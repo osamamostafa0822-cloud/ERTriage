@@ -15,7 +15,8 @@ internal static partial class FictionalPatientSeedValidator
 {
     public const int SupportedSchemaVersion = 1;
     public const int SeedKeyMaxLength = 50;
-    public const int MaxPatients = 100;
+    /// <summary>Upper bound for one seed document (D-63: 12 curated + 5,000 generated today).</summary>
+    public const int MaxPatients = 10_000;
 
     /// <summary>Arrival can be at most this long ago (keeps demo data recent and offsets small).</summary>
     public const int MaxArrivedMinutesAgo = 24 * 60;

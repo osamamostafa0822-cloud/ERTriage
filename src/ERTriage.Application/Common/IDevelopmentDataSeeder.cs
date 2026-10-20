@@ -18,6 +18,11 @@ public interface IDevelopmentDataSeeder
 /// <param name="AlreadyExisting">Records whose seed key was already present (never modified).</param>
 /// <param name="Skipped">Records rejected by validation (invalid data, duplicate seed key); retried next start.</param>
 /// <param name="Failed">Valid records that failed in the Domain or with a recoverable database error; retried next start.</param>
+/// <param name="DocumentErrorCode">
+/// Set only for a <b>document-level</b> failure (missing file, malformed JSON, unsupported schema, no records): nothing
+/// was read or written. <c>null</c> for record-level problems, which are counted in <paramref name="Skipped"/> and
+/// <paramref name="Failed"/>.
+/// </param>
 public sealed record DevelopmentSeedResult(
     Guid SeedRunId,
     DevelopmentSeedOutcome Outcome,
@@ -25,7 +30,12 @@ public sealed record DevelopmentSeedResult(
     int Inserted,
     int AlreadyExisting,
     int Skipped,
-    int Failed);
+    int Failed,
+    string? DocumentErrorCode = null)
+{
+    /// <summary>True when the seed document as a whole was rejected (as opposed to individual records).</summary>
+    public bool IsDocumentFailure => DocumentErrorCode is not null;
+}
 
 public enum DevelopmentSeedOutcome
 {

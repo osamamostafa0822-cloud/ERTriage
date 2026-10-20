@@ -17,9 +17,10 @@ namespace ERTriage.Infrastructure.Persistence.Seed;
 /// are reported and skipped; valid ones continue.</item>
 /// <item>One transaction holds a transaction-owned <c>sp_getapplock</c> for the whole run (return code checked), so
 /// concurrent starts are serialised and cannot insert a key twice.</item>
-/// <item>Each missing record gets its own savepoint: Domain creation → add patient + marker → <c>SaveChanges</c>. A Domain
-/// rule violation or a recoverable constraint error rolls back <b>only that record</b> (no partial patient or marker) and
-/// the change tracker is cleared; the record is retried on the next start.</item>
+/// <item>Every missing patient is created through the Domain first (a Domain rule violation affects only that record).
+/// Patients are then saved in batches (<see cref="DevelopmentSeedOptions.BatchSize"/>), each behind a savepoint; a
+/// recoverable constraint error rolls the batch back and retries it record by record, each with its own savepoint, so
+/// <b>only the failing record</b> is lost (no partial patient or marker); it is retried on the next start.</item>
 /// <item>Anything else (connection, timeout, deadlock, transaction failure, unexpected exception) is fatal: logged as an
 /// Error with the exception and rethrown; the transaction rolls back.</item>
 /// </list>
@@ -83,7 +84,7 @@ internal sealed class DevelopmentDataSeeder : IDevelopmentDataSeeder
                 "Development seed failed: the seed document is unusable ({ErrorCode}); nothing was written. SeedRunId {SeedRunId}",
                 ex.Code,
                 runId);
-            return new DevelopmentSeedResult(runId, DevelopmentSeedOutcome.Failed, 0, 0, 0, 0, 0);
+            return new DevelopmentSeedResult(runId, DevelopmentSeedOutcome.Failed, 0, 0, 0, 0, 0, DocumentErrorCode: ex.Code);
         }
 
         foreach (var issue in load.Issues)
@@ -97,6 +98,13 @@ internal sealed class DevelopmentDataSeeder : IDevelopmentDataSeeder
                 runId);
         }
 
+        if (load.Valid.Count == 0)
+        {
+            // Record-level failure of every record: no database work, no lock (DocumentErrorCode stays null).
+            LogSummary(runId, DevelopmentSeedOutcome.Failed, load, 0, 0, 0);
+            return new DevelopmentSeedResult(runId, DevelopmentSeedOutcome.Failed, load.TotalRecords, 0, 0, load.SkippedCount, 0);
+        }
+
         try
         {
             return await SeedValidRecordsAsync(runId, load, cancellationToken);
@@ -104,6 +112,7 @@ internal sealed class DevelopmentDataSeeder : IDevelopmentDataSeeder
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             // Fatal: never skipped silently. Logged once here and rethrown unchanged; the transaction rolls back.
+            // Cancellation is not a failure: it propagates unlogged (the host is stopping) and also rolls back.
             _logger.LogError(ex, "Development seed failed fatally; this run wrote nothing. SeedRunId {SeedRunId}", runId);
             throw;
         }
@@ -141,6 +150,8 @@ internal sealed class DevelopmentDataSeeder : IDevelopmentDataSeeder
 
         int inserted = 0, alreadyExisting = 0, failed = 0;
 
+        // 1. Create every missing patient through the Domain. A DomainException affects only that record.
+        var pending = new List<(ValidatedFictionalPatient Record, Patient Patient)>();
         foreach (var record in load.Valid)
         {
             if (existingKeys.Contains(record.SeedKey))
@@ -149,60 +160,100 @@ internal sealed class DevelopmentDataSeeder : IDevelopmentDataSeeder
                 continue;
             }
 
-            switch (await SeedRecordAsync(runId, transaction, record, now, cancellationToken))
+            try
             {
-                case RecordOutcome.Inserted:
-                    inserted++;
-                    break;
-                case RecordOutcome.AlreadyExisting:
-                    alreadyExisting++;
-                    break;
-                default:
-                    failed++;
-                    break;
+                pending.Add((record, _createPatient(record, now)));
+            }
+            catch (DomainException ex)
+            {
+                LogRecordFailure(runId, record, SeedErrorCodes.DomainRuleViolation, "domain", ex.GetType().Name, null);
+                failed++;
+            }
+        }
+
+        // 2. Save in batches, each behind a savepoint. A recoverable error rolls the batch back and retries it record by
+        //    record, so only the failing record is lost.
+        var batchSize = Math.Max(1, _options.BatchSize);
+        var batchNumber = 0;
+        foreach (var batch in pending.Chunk(batchSize))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (batch.Length > 1 && await TrySaveBatchAsync(transaction, batch, ++batchNumber, now, cancellationToken))
+            {
+                inserted += batch.Length;
+                continue;
+            }
+
+            foreach (var (record, patient) in batch)
+            {
+                switch (await SeedRecordAsync(runId, transaction, record, patient, now, cancellationToken))
+                {
+                    case RecordOutcome.Inserted:
+                        inserted++;
+                        break;
+                    case RecordOutcome.AlreadyExisting:
+                        alreadyExisting++;
+                        break;
+                    default:
+                        failed++;
+                        break;
+                }
             }
         }
 
         await transaction.CommitAsync(cancellationToken);
 
         var outcome = Classify(load, inserted, alreadyExisting, failed);
-        var level = outcome is DevelopmentSeedOutcome.PartiallyCompleted or DevelopmentSeedOutcome.Failed
-            ? LogLevel.Warning
-            : LogLevel.Information;
-
-        _logger.Log(
-            level,
-            "Development seed {Outcome}: TotalRecords {TotalRecords}, InsertedCount {InsertedCount}, AlreadyExistingCount {AlreadyExistingCount}, SkippedCount {SkippedCount}, FailedCount {FailedCount}. SeedRunId {SeedRunId}",
-            outcome,
-            load.TotalRecords,
-            inserted,
-            alreadyExisting,
-            load.SkippedCount,
-            failed,
-            runId);
+        LogSummary(runId, outcome, load, inserted, alreadyExisting, failed);
 
         return new DevelopmentSeedResult(runId, outcome, load.TotalRecords, inserted, alreadyExisting, load.SkippedCount, failed);
+    }
+
+    /// <summary>
+    /// Saves a whole batch behind one savepoint. Returns false (after rolling the batch back and clearing the change
+    /// tracker) when a recoverable error occurs, so the caller retries the batch record by record. Fatal errors propagate.
+    /// </summary>
+    private async Task<bool> TrySaveBatchAsync(
+        IDbContextTransaction transaction,
+        (ValidatedFictionalPatient Record, Patient Patient)[] batch,
+        int batchNumber,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        var savepoint = $"seed_batch_{batchNumber}";
+        await transaction.CreateSavepointAsync(savepoint, cancellationToken);
+
+        foreach (var (record, patient) in batch)
+        {
+            _context.Patients.Add(patient);
+            _context.DevelopmentSeedRecords.Add(new DevelopmentSeedRecord(record.SeedKey, patient.Id, now.UtcDateTime));
+        }
+
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+            return true;
+        }
+        catch (DbUpdateException ex) when (RecoverableSqlNumber(ex) is not null)
+        {
+            await transaction.RollbackToSavepointAsync(savepoint, cancellationToken);
+            return false;
+        }
+        finally
+        {
+            _context.ChangeTracker.Clear();
+        }
     }
 
     private async Task<RecordOutcome> SeedRecordAsync(
         Guid runId,
         IDbContextTransaction transaction,
         ValidatedFictionalPatient record,
+        Patient patient,
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
-        Patient patient;
-        try
-        {
-            patient = _createPatient(record, now);
-        }
-        catch (DomainException ex)
-        {
-            // Nothing was added to the context yet: only this record is affected.
-            LogRecordFailure(runId, record, SeedErrorCodes.DomainRuleViolation, "domain", ex.GetType().Name, null);
-            return RecordOutcome.Failed;
-        }
-
         var savepoint = $"seed_{record.Index}";
         await transaction.CreateSavepointAsync(savepoint, cancellationToken);
 
@@ -234,6 +285,19 @@ internal sealed class DevelopmentDataSeeder : IDevelopmentDataSeeder
             _context.ChangeTracker.Clear();
         }
     }
+
+    /// <summary>The single summary entry of a run (Warning when the demo data is incomplete).</summary>
+    private void LogSummary(Guid runId, DevelopmentSeedOutcome outcome, SeedLoadResult load, int inserted, int alreadyExisting, int failed) =>
+        _logger.Log(
+            outcome is DevelopmentSeedOutcome.PartiallyCompleted or DevelopmentSeedOutcome.Failed ? LogLevel.Warning : LogLevel.Information,
+            "Development seed {Outcome}: TotalRecords {TotalRecords}, InsertedCount {InsertedCount}, AlreadyExistingCount {AlreadyExistingCount}, SkippedCount {SkippedCount}, FailedCount {FailedCount}. SeedRunId {SeedRunId}",
+            outcome,
+            load.TotalRecords,
+            inserted,
+            alreadyExisting,
+            load.SkippedCount,
+            failed,
+            runId);
 
     private void LogRecordFailure(Guid runId, ValidatedFictionalPatient record, string code, string field, string exceptionType, int? sqlNumber) =>
         _logger.LogWarning(

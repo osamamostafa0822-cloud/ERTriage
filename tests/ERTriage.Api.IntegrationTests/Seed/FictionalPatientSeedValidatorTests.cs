@@ -191,6 +191,16 @@ public class FictionalPatientSeedValidatorTests
     }
 
     [Fact]
+    public void MoreThanTenThousandRecords_IsRejectedAsAWhole()
+    {
+        var records = Enumerable.Range(0, 10_001).Select(i => SeedTestData.WaitingPatient($"k{i}")).ToArray();
+
+        var ex = Assert.Throws<SeedDataException>(() => FictionalPatientSeedLoader.Parse(SeedTestData.File(records)));
+
+        Assert.Equal("TooManyRecords", ex.Code);
+    }
+
+    [Fact]
     public async Task MissingFile_IsRejectedWithoutExposingThePath()
     {
         var path = Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}.json");

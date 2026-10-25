@@ -4,9 +4,11 @@ using ERTriage.Infrastructure;
 using ERTriage.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using ERTriage.Application.Patients.Repositories;
 using ERTriage.Application.Patients.Services;
 using ERTriage.Application.Triage.Services;
+using ERTriage.Domain.Patients;
+using ERTriage.Domain.Common;
+using ERTriage.Domain.Triage;
 
 namespace ERTriage.Api.IntegrationTests;
 
@@ -61,6 +63,22 @@ public class DependencyInjectionTests
 
         Assert.Same(repositoryA1, repositoryA2);
         Assert.NotSame(repositoryA1, repositoryB);
+    }
+
+    [Fact]
+    public void AddInfrastructure_Registered_ResolvesTriageBoardReadRepositoryPerScope()
+    {
+        using var provider = BuildProvider();
+
+        using var scopeA = provider.CreateScope();
+        using var scopeB = provider.CreateScope();
+
+        var readerA1 = scopeA.ServiceProvider.GetRequiredService<ITriageBoardReadRepository>();
+        var readerA2 = scopeA.ServiceProvider.GetRequiredService<ITriageBoardReadRepository>();
+        var readerB = scopeB.ServiceProvider.GetRequiredService<ITriageBoardReadRepository>();
+
+        Assert.Same(readerA1, readerA2);
+        Assert.NotSame(readerA1, readerB);
     }
 
     [Fact]

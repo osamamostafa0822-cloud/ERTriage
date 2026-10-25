@@ -1,10 +1,9 @@
 using System.Data.SqlTypes;
-using ERTriage.Application.Common;
 using ERTriage.Domain.Patients;
 using ERTriage.Infrastructure.Persistence;
 using Microsoft.Extensions.DependencyInjection;
-using ERTriage.Application.Patients.Repositories;
-using ERTriage.Application.Triage.Queries;
+using ERTriage.Domain.Common;
+using ERTriage.Domain.Triage;
 
 namespace ERTriage.Api.IntegrationTests.Persistence;
 
@@ -83,7 +82,8 @@ public sealed class PatientRepositoryTests(SqlServerFixture fixture) : Persisten
         await repository.GetByIdReadOnlyAsync(patient.Id, CancellationToken.None);
         Assert.Empty(context.ChangeTracker.Entries());
 
-        await repository.GetBoardPageAsync(BoardQuery([], 1, 10), CancellationToken.None);
+        await scope.ServiceProvider.GetRequiredService<ITriageBoardReadRepository>()
+            .GetPageAsync(BoardQuery([], 1, 10), CancellationToken.None);
         Assert.Empty(context.ChangeTracker.Entries());
 
         await repository.GetByIdAsync(patient.Id, CancellationToken.None);
@@ -193,11 +193,7 @@ public sealed class PatientRepositoryTests(SqlServerFixture fixture) : Persisten
         };
 
         Assert.Equal([5, 5, 2], pages.Select(p => p.Items.Count));
-        Assert.All(pages, p =>
-        {
-            Assert.Equal(12, p.TotalCount);
-            Assert.Equal(3, p.TotalPages);
-        });
+        Assert.All(pages, p => Assert.Equal(12, p.TotalCount));
 
         var actual = pages.SelectMany(p => p.Items).Select(p => p.Id).ToList();
         Assert.Equal(expected, actual);
@@ -216,17 +212,21 @@ public sealed class PatientRepositoryTests(SqlServerFixture fixture) : Persisten
 
         Assert.Empty(page.Items);
         Assert.Equal(7, page.TotalCount);
-        Assert.Equal(10, page.PageNumber);
-        Assert.Equal(5, page.PageSize);
     }
 
+    // User paging input (page number, 1-100 page size) is validated in Application before the query is built
+    // (TriageBoardServiceTests); the repository only guards against an impossible Skip/Take.
     [SqlServerTheory]
-    [InlineData(0, 10)]
-    [InlineData(1, 0)]
-    [InlineData(1, 101)]
-    public async Task Board_InvalidPagination_IsRejectedWithAValidationException(int pageNumber, int pageSize)
+    [InlineData(-1, 10)]
+    [InlineData(0, 0)]
+    [InlineData(0, -5)]
+    public async Task Board_InvalidSkipOrTake_IsRejectedAsAProgrammingError(int skip, int take)
     {
-        await Assert.ThrowsAsync<ValidationException>(() => GetBoardAsync([], pageNumber, pageSize));
+        await using var scope = Services.CreateAsyncScope();
+        var repository = scope.ServiceProvider.GetRequiredService<ITriageBoardReadRepository>();
+
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
+            () => repository.GetPageAsync(new TriageBoardQuery([], skip, take), CancellationToken.None));
     }
 
     [SqlServerFact]
@@ -252,12 +252,67 @@ public sealed class PatientRepositoryTests(SqlServerFixture fixture) : Persisten
         Assert.True(priority >= 0 && priority < arrival && arrival < id, "ORDER BY must be priority, arrival time, id.");
     }
 
+    // ---- board: projection ----
+
+    [SqlServerFact]
+    public async Task Board_ProjectsEveryBoardField_FromTheDatabase()
+    {
+        var overridden = PersistenceTestData.NewPatient(Clock, "Projected Override", Now.AddMinutes(-20), overridePriority: 1);
+        var inTreatment = PersistenceTestData.NewPatient(
+            Clock, "Projected Treatment", Now.AddMinutes(-50), status: PatientStatus.InTreatment);
+        await SeedAsync(overridden, inTreatment);
+
+        var rows = (await GetBoardAsync([], 1, 10)).Items.ToDictionary(r => r.Id);
+
+        var o = rows[overridden.Id];
+        Assert.Equal("Projected Override", o.FullName);
+        Assert.Equal(overridden.Age, o.Age);
+        Assert.Equal(overridden.ChiefComplaint, o.ChiefComplaint);
+        Assert.Equal(overridden.ArrivalTime, o.ArrivalTime);
+        Assert.Equal(DateTimeKind.Utc, o.ArrivalTime.Kind);
+        Assert.Equal(1, o.CurrentPriority);
+        Assert.Equal(overridden.CalculatedPriority, o.CalculatedPriority);
+        Assert.Equal(overridden.PriorityReason, o.PriorityReason);
+        Assert.True(o.IsOverridden);
+        Assert.Equal("Test override", o.OverrideReason);
+        Assert.Equal(PatientStatus.Waiting, o.Status);
+        Assert.Null(o.TreatmentStartedAt);
+
+        var t = rows[inTreatment.Id];
+        Assert.False(t.IsOverridden);
+        Assert.Null(t.OverrideReason);
+        Assert.Equal(PatientStatus.InTreatment, t.Status);
+        Assert.Equal(Now.UtcDateTime, t.TreatmentStartedAt);
+    }
+
+    [SqlServerFact]
+    public async Task Board_PageQuery_ReadsOnlyTheBoardColumns()
+    {
+        await SeedBoardAsync();
+        Logs.Clear();
+
+        await GetBoardAsync([], 1, 10);
+
+        var pageSql = Assert.Single(Logs.Commands, c => c.Contains("OFFSET", StringComparison.OrdinalIgnoreCase));
+        var selectList = pageSql[..pageSql.IndexOf("FROM", StringComparison.OrdinalIgnoreCase)];
+
+        foreach (var column in new[] { "[HeartRate]", "[SystolicBp]", "[DiastolicBp]", "[TemperatureC]", "[SpO2]",
+                     "[DispositionNote]", "[OverriddenBy]", "[OverriddenAt]", "[CompletedAt]", "[CreatedAt]", "[RowVersion]" })
+        {
+            Assert.DoesNotContain(column, selectList, StringComparison.Ordinal);
+        }
+
+        Assert.Contains("[FullName]", selectList, StringComparison.Ordinal);
+        Assert.Contains("[TreatmentStartedAt]", selectList, StringComparison.Ordinal);
+    }
+
     // ---- helpers ----
 
+    // Tests speak in pages; the Domain query takes the equivalent Skip/Take.
     private static TriageBoardQuery BoardQuery(PatientStatus[] statuses, int pageNumber, int pageSize, int[]? priorities = null) =>
-        new(statuses, new PaginationRequest(pageNumber, pageSize), priorities);
+        new(statuses, (pageNumber - 1) * pageSize, pageSize, priorities);
 
-    private async Task<PagedResult<Patient>> GetBoardAsync(
+    private async Task<TriageBoardPage> GetBoardAsync(
         PatientStatus[] statuses,
         int pageNumber,
         int pageSize,
@@ -265,8 +320,8 @@ public sealed class PatientRepositoryTests(SqlServerFixture fixture) : Persisten
     {
         await using var scope = Services.CreateAsyncScope();
 
-        return await scope.ServiceProvider.GetRequiredService<IPatientRepository>()
-            .GetBoardPageAsync(BoardQuery(statuses, pageNumber, pageSize, priorities), CancellationToken.None);
+        return await scope.ServiceProvider.GetRequiredService<ITriageBoardReadRepository>()
+            .GetPageAsync(BoardQuery(statuses, pageNumber, pageSize, priorities), CancellationToken.None);
     }
 
     // Expected business order: E, B, C, G, A, D, F (priority 1..4, then the longer-waiting arrival first).

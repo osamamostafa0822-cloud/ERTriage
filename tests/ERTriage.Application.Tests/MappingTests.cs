@@ -82,7 +82,7 @@ public class MappingTests
         var clock = TestData.Clock();
         var patient = TestData.NewPatient(clock, 45);
 
-        var item = TriageBoardMapper.ToItem(patient, clock.GetUtcNow());
+        var item = TriageBoardMapper.ToItem(TestData.ToBoardRow(patient), clock.GetUtcNow());
 
         Assert.Equal(patient.Id, item.Id);
         Assert.Equal("Test Patient Alpha", item.FullName);
@@ -107,7 +107,7 @@ public class MappingTests
         var patient = TestData.NewPatient(clock, 10);
         patient.ApplyPriorityOverride(4, "Stable on reassessment", null, clock);
 
-        var item = TriageBoardMapper.ToItem(patient, clock.GetUtcNow());
+        var item = TriageBoardMapper.ToItem(TestData.ToBoardRow(patient), clock.GetUtcNow());
 
         Assert.True(item.IsOverridden);
         Assert.Equal(4, item.CurrentPriority);
@@ -123,7 +123,7 @@ public class MappingTests
         patient.ChangeStatus(PatientStatus.InTreatment, null, clock);
         patient.ChangeStatus(PatientStatus.Admitted, "Admitted to ward.", clock);
 
-        var item = TriageBoardMapper.ToItem(patient, clock.GetUtcNow());
+        var item = TriageBoardMapper.ToItem(TestData.ToBoardRow(patient), clock.GetUtcNow());
 
         Assert.Null(item.WaitingMinutes);
         Assert.Equal(WaitingLevel.None, item.WaitingLevel);

@@ -1,8 +1,7 @@
-using ERTriage.Application.Common;
 using ERTriage.Domain.Patients;
 using ERTriage.Application.Patients.Notifications;
-using ERTriage.Application.Patients.Repositories;
-using ERTriage.Application.Triage.Queries;
+using ERTriage.Domain.Common;
+using ERTriage.Domain.Triage;
 
 namespace ERTriage.Application.Tests;
 
@@ -17,14 +16,7 @@ internal sealed class FakePatientRepository : IPatientRepository
 
     public int ReadOnlyLoads { get; private set; }
 
-    public int BoardCalls { get; private set; }
-
-    public TriageBoardQuery? LastBoardQuery { get; private set; }
-
     public CancellationToken LastToken { get; private set; }
-
-    /// <summary>What <see cref="GetBoardPageAsync"/> returns.</summary>
-    public PagedResult<Patient> BoardResult { get; set; } = new([], 0, 1, 10);
 
     public void Seed(Patient patient) => _patients[patient.Id] = patient;
 
@@ -49,14 +41,27 @@ internal sealed class FakePatientRepository : IPatientRepository
 
         return Task.FromResult(_patients.GetValueOrDefault(id));
     }
+}
 
-    public Task<PagedResult<Patient>> GetBoardPageAsync(TriageBoardQuery query, CancellationToken cancellationToken)
+/// <summary>Hand-written board read port: records the query and returns a preset page (no mocking library).</summary>
+internal sealed class FakeTriageBoardReadRepository : ITriageBoardReadRepository
+{
+    public int Calls { get; private set; }
+
+    public TriageBoardQuery? LastQuery { get; private set; }
+
+    public CancellationToken LastToken { get; private set; }
+
+    /// <summary>What <see cref="GetPageAsync"/> returns.</summary>
+    public TriageBoardPage Result { get; set; } = new([], 0);
+
+    public Task<TriageBoardPage> GetPageAsync(TriageBoardQuery query, CancellationToken cancellationToken)
     {
-        BoardCalls++;
-        LastBoardQuery = query;
+        Calls++;
+        LastQuery = query;
         LastToken = cancellationToken;
 
-        return Task.FromResult(BoardResult);
+        return Task.FromResult(Result);
     }
 }
 

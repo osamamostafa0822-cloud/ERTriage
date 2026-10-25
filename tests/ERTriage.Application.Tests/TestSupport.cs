@@ -1,4 +1,5 @@
 using ERTriage.Domain.Patients;
+using ERTriage.Domain.Triage;
 
 namespace ERTriage.Application.Tests;
 
@@ -27,4 +28,23 @@ internal static class TestData
             VitalSigns.Create(112, 138, 86, 37.9m, 88),
             clock.GetUtcNow().AddMinutes(-minutesWaited),
             clock);
+
+    /// <summary>
+    /// The board row the read repository would project for <paramref name="patient"/> (same fields as the EF projection,
+    /// which is verified against SQL Server in the repository integration tests).
+    /// </summary>
+    public static TriageBoardRow ToBoardRow(Patient patient) =>
+        new(
+            patient.Id,
+            patient.FullName,
+            patient.Age,
+            patient.ChiefComplaint,
+            patient.ArrivalTime,
+            patient.CurrentPriority,
+            patient.CalculatedPriority,
+            patient.PriorityReason,
+            patient.IsOverridden,
+            patient.OverrideReason,
+            patient.Status,
+            patient.TreatmentStartedAt);
 }

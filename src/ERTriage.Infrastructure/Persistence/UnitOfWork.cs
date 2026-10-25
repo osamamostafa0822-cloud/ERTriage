@@ -1,5 +1,6 @@
 using ERTriage.Application.Common;
 using Microsoft.EntityFrameworkCore;
+using ERTriage.Domain.Common;
 
 namespace ERTriage.Infrastructure.Persistence;
 

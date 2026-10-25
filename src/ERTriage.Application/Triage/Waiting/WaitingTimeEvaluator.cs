@@ -8,26 +8,28 @@ public sealed record WaitingTime(int? Minutes, WaitingLevel Level);
 /// <summary>
 /// Pure waiting-time rule (docs/03-features/waiting-time.md): no I/O and no clock of its own; the caller passes
 /// <c>now</c> from the injected <see cref="TimeProvider"/> (D-07). Thresholds are fixed, priority-independent and
-/// non-clinical.
+/// non-clinical. Takes the three fields it needs rather than the aggregate, so it works on the board's projected row.
 /// </summary>
 public static class WaitingTimeEvaluator
 {
     public const int WarningMinutes = 30;
     public const int CriticalMinutes = 60;
 
-    public static WaitingTime Evaluate(Patient patient, DateTimeOffset now)
+    public static WaitingTime Evaluate(
+        PatientStatus status,
+        DateTime arrivalTime,
+        DateTime? treatmentStartedAt,
+        DateTimeOffset now)
     {
-        ArgumentNullException.ThrowIfNull(patient);
-
-        switch (patient.Status)
+        switch (status)
         {
             case PatientStatus.Waiting:
-                var minutes = WholeMinutes(patient.ArrivalTime, now.UtcDateTime);
+                var minutes = WholeMinutes(arrivalTime, now.UtcDateTime);
                 return new WaitingTime(minutes, LevelFor(minutes));
 
-            case PatientStatus.InTreatment when patient.TreatmentStartedAt is { } startedAt:
+            case PatientStatus.InTreatment when treatmentStartedAt is { } startedAt:
                 // Frozen at the moment treatment began: "Waited N min", no indicator level.
-                return new WaitingTime(WholeMinutes(patient.ArrivalTime, startedAt), WaitingLevel.None);
+                return new WaitingTime(WholeMinutes(arrivalTime, startedAt), WaitingLevel.None);
 
             default:
                 return new WaitingTime(null, WaitingLevel.None);

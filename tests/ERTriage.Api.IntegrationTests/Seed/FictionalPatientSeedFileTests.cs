@@ -121,7 +121,7 @@ public class FictionalPatientSeedFileTests
     {
         var patients = await CreateAllAsync();
 
-        // Same ordering as PatientRepository.GetBoardPageAsync: CurrentPriority, ArrivalTime, Id.
+        // Same ordering as TriageBoardReadRepository.GetPageAsync: CurrentPriority, ArrivalTime, Id.
         var board = patients.Values
             .Where(p => p.Status is PatientStatus.Waiting or PatientStatus.InTreatment)
             .OrderBy(p => p.CurrentPriority).ThenBy(p => p.ArrivalTime).ThenBy(p => p.Id)
@@ -130,12 +130,18 @@ public class FictionalPatientSeedFileTests
 
         Assert.Equal(SeedTestData.DefaultBoardOrder, board);
 
-        WaitingLevel Level(string key) => WaitingTimeEvaluator.Evaluate(patients[key], SeedTestData.Now).Level;
+        WaitingTime Wait(string key)
+        {
+            var patient = patients[key];
+            return WaitingTimeEvaluator.Evaluate(patient.Status, patient.ArrivalTime, patient.TreatmentStartedAt, SeedTestData.Now);
+        }
+
+        WaitingLevel Level(string key) => Wait(key).Level;
         Assert.Equal(WaitingLevel.Normal, Level("alpha"));
         Assert.Equal(WaitingLevel.Warning, Level("charlie"));
         Assert.Equal(WaitingLevel.Critical, Level("hotel"));
         Assert.Equal(WaitingLevel.None, Level("bravo"));
-        Assert.Equal(10, WaitingTimeEvaluator.Evaluate(patients["bravo"], SeedTestData.Now).Minutes);
+        Assert.Equal(10, Wait("bravo").Minutes);
     }
 
     private static async Task<Dictionary<string, Patient>> CreateAllAsync()

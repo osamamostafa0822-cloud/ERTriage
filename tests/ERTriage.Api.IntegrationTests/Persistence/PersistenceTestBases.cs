@@ -3,7 +3,7 @@ using ERTriage.Application.Common;
 using ERTriage.Domain.Patients;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
-using ERTriage.Application.Patients.Repositories;
+using ERTriage.Domain.Common;
 
 namespace ERTriage.Api.IntegrationTests.Persistence;
 

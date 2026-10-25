@@ -1,6 +1,5 @@
 using System.Reflection;
 using ERTriage.Api;
-using ERTriage.Application.Common;
 using ERTriage.Domain.Common;
 
 namespace ERTriage.Api.IntegrationTests;
@@ -15,7 +14,7 @@ public class ArchitectureTests
     private const string ApiName = "ERTriage.Api";
 
     private static readonly Assembly DomainAssembly = typeof(DomainException).Assembly;
-    private static readonly Assembly ApplicationAssembly = typeof(IUnitOfWork).Assembly;
+    private static readonly Assembly ApplicationAssembly = typeof(ERTriage.Application.DependencyInjection).Assembly;
     private static readonly Assembly InfrastructureAssembly = typeof(ERTriage.Infrastructure.DependencyInjection).Assembly;
     private static readonly Assembly ApiAssembly = typeof(ApiDependencyInjection).Assembly;
 
@@ -46,6 +45,14 @@ public class ArchitectureTests
         Assert.DoesNotContain(references, n => n is InfrastructureName or ApiName);
         Assert.DoesNotContain(references, n => n.StartsWith(EfCore, StringComparison.Ordinal));
         Assert.DoesNotContain(references, n => n.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void PersistencePorts_AreOwnedByTheDomain()
+    {
+        Assert.Same(DomainAssembly, typeof(ERTriage.Domain.Patients.IPatientRepository).Assembly);
+        Assert.Same(DomainAssembly, typeof(ERTriage.Domain.Common.IUnitOfWork).Assembly);
+        Assert.Same(DomainAssembly, typeof(ERTriage.Domain.Triage.ITriageBoardReadRepository).Assembly);
     }
 
     [Fact]

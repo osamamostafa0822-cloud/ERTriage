@@ -13,8 +13,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using ERTriage.Application.Patients.Repositories;
-using ERTriage.Application.Triage.Queries;
+using ERTriage.Domain.Triage;
 
 namespace ERTriage.Api.IntegrationTests.Persistence;
 
@@ -390,7 +389,7 @@ public sealed class DevelopmentDataSeederTests(SqlServerFixture fixture) : Datab
         await SeedAsync();
         await using var provider = BuildProvider();
         await using var scope = provider.CreateAsyncScope();
-        var repository = scope.ServiceProvider.GetRequiredService<IPatientRepository>();
+        var boardRepository = scope.ServiceProvider.GetRequiredService<ITriageBoardReadRepository>();
         PatientStatus[] active = [PatientStatus.Waiting, PatientStatus.InTreatment];
 
         PatientStatus[] completed = [PatientStatus.Discharged, PatientStatus.Admitted];
@@ -398,8 +397,8 @@ public sealed class DevelopmentDataSeederTests(SqlServerFixture fixture) : Datab
         // The expected total is passed explicitly: both filters have two statuses, so it cannot be derived from them.
         async Task<string[]> Page(PatientStatus[] statuses, int number, int size, int expectedTotal)
         {
-            var page = await repository.GetBoardPageAsync(
-                new TriageBoardQuery(statuses, new PaginationRequest(number, size)), CancellationToken.None);
+            var page = await boardRepository.GetPageAsync(
+                new TriageBoardQuery(statuses, (number - 1) * size, size), CancellationToken.None);
             Assert.Equal(expectedTotal, page.TotalCount);
             return page.Items.Select(p => p.FullName).ToArray();
         }
@@ -486,12 +485,12 @@ public sealed class DevelopmentDataSeederTests(SqlServerFixture fixture) : Datab
 
         await using var provider = BuildProvider();
         await using var scope = provider.CreateAsyncScope();
-        var repository = scope.ServiceProvider.GetRequiredService<IPatientRepository>();
-        var rows = new List<Patient>();
+        var boardRepository = scope.ServiceProvider.GetRequiredService<ITriageBoardReadRepository>();
+        var rows = new List<TriageBoardRow>();
         for (var number = 1; ; number++)
         {
-            var page = await repository.GetBoardPageAsync(
-                new TriageBoardQuery([PatientStatus.Waiting, PatientStatus.InTreatment], new PaginationRequest(number, 100)),
+            var page = await boardRepository.GetPageAsync(
+                new TriageBoardQuery([PatientStatus.Waiting, PatientStatus.InTreatment], (number - 1) * 100, 100),
                 CancellationToken.None);
             Assert.Equal(expectedActive, page.TotalCount);
             if (page.Items.Count == 0) break;

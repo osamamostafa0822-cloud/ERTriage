@@ -6,7 +6,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using ERTriage.Application.Patients.Repositories;
+using ERTriage.Domain.Patients;
+using ERTriage.Domain.Common;
+using ERTriage.Domain.Triage;
 
 namespace ERTriage.Infrastructure;
 
@@ -33,6 +35,7 @@ public static class DependencyInjection
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IPatientRepository, PatientRepository>();
+        services.AddScoped<ITriageBoardReadRepository, TriageBoardReadRepository>();
         services.AddScoped<IDatabaseInitializer, DatabaseInitializer>();
 
         // Development seed (D-44, D-58). Registered everywhere; it only runs when Program.cs gates it in Development.

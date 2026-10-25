@@ -1,32 +1,34 @@
 using ERTriage.Application.Triage.Dtos;
-using ERTriage.Domain.Patients;
 using ERTriage.Application.Triage.Waiting;
+using ERTriage.Domain.Patients;
+using ERTriage.Domain.Triage;
 
 namespace ERTriage.Application.Triage.Mapping;
 
-/// <summary>Maps a patient to a board row. <paramref name="now"/> is read once per request by the caller.</summary>
+/// <summary>Maps a projected board row to its DTO. <paramref name="now"/> is read once per request by the caller.</summary>
 public static class TriageBoardMapper
 {
-    public static TriageBoardItemDto ToItem(Patient patient, DateTimeOffset now)
+    public static TriageBoardItemDto ToItem(TriageBoardRow row, DateTimeOffset now)
     {
-        ArgumentNullException.ThrowIfNull(patient);
+        ArgumentNullException.ThrowIfNull(row);
 
-        var waiting = WaitingTimeEvaluator.Evaluate(patient, now);
+        var waiting = WaitingTimeEvaluator.Evaluate(row.Status, row.ArrivalTime, row.TreatmentStartedAt, now);
 
         return new TriageBoardItemDto(
-            patient.Id,
-            patient.FullName,
-            patient.Age,
-            patient.ChiefComplaint,
-            patient.ArrivalTime,
-            patient.CurrentPriority,
-            patient.CalculatedPriority,
-            patient.PriorityReason,
-            patient.IsOverridden,
-            patient.OverrideReason,
-            patient.Status,
+            row.Id,
+            row.FullName,
+            row.Age,
+            row.ChiefComplaint,
+            row.ArrivalTime,
+            row.CurrentPriority,
+            row.CalculatedPriority,
+            row.PriorityReason,
+            row.IsOverridden,
+            row.OverrideReason,
+            row.Status,
             waiting.Minutes,
             waiting.Level,
-            patient.AllowedTransitions());
+            // Same single source of truth as Patient.AllowedTransitions(); the UI never duplicates the matrix.
+            PatientStatusTransitions.From(row.Status));
     }
 }

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using ERTriage.Application.Triage.Requests;
 using ERTriage.Application.Triage.Services;
 using ERTriage.Application.Triage.Waiting;
+using ERTriage.Domain.Triage;
 
 namespace ERTriage.Application.Tests;
 
@@ -11,7 +12,7 @@ public class TriageBoardServiceTests
 {
     private readonly FakeTimeProvider _clock = TestData.Clock();
     private readonly CapturingLogger<TriageBoardService> _logger = new();
-    private readonly FakePatientRepository _repository = new();
+    private readonly FakeTriageBoardReadRepository _repository = new();
 
     private TriageBoardService CreateService() => new(_repository, _clock, _logger);
 
@@ -20,10 +21,11 @@ public class TriageBoardServiceTests
     {
         await CreateService().GetBoardAsync(new TriageBoardRequest(), CancellationToken.None);
 
-        var query = _repository.LastBoardQuery!;
+        var query = _repository.LastQuery!;
         Assert.Equal([PatientStatus.Waiting, PatientStatus.InTreatment], query.Statuses);
         Assert.Empty(query.Priorities!);
-        Assert.Equal(new PaginationRequest(1, 10), query.Page);
+        Assert.Equal(0, query.Skip);
+        Assert.Equal(10, query.Take);
     }
 
     [Fact]
@@ -31,7 +33,7 @@ public class TriageBoardServiceTests
     {
         await CreateService().GetBoardAsync(new TriageBoardRequest(Statuses: []), CancellationToken.None);
 
-        Assert.Equal(TriageBoardService.DefaultStatuses, _repository.LastBoardQuery!.Statuses);
+        Assert.Equal(TriageBoardService.DefaultStatuses, _repository.LastQuery!.Statuses);
     }
 
     [Fact]
@@ -42,7 +44,7 @@ public class TriageBoardServiceTests
 
         await CreateService().GetBoardAsync(request, CancellationToken.None);
 
-        Assert.Equal([PatientStatus.Discharged, PatientStatus.Admitted], _repository.LastBoardQuery!.Statuses);
+        Assert.Equal([PatientStatus.Discharged, PatientStatus.Admitted], _repository.LastQuery!.Statuses);
     }
 
     [Fact]
@@ -50,19 +52,20 @@ public class TriageBoardServiceTests
     {
         await CreateService().GetBoardAsync(new TriageBoardRequest(Priorities: [2, 1, 2]), CancellationToken.None);
 
-        Assert.Equal([2, 1], _repository.LastBoardQuery!.Priorities);
+        Assert.Equal([2, 1], _repository.LastQuery!.Priorities);
     }
 
     [Fact]
-    public async Task GetBoardAsync_Paging_IsPassedToTheRepositoryAndMetadataIsPreserved()
+    public async Task GetBoardAsync_Paging_IsTurnedIntoSkipTakeAndThePageMetadataComesFromTheRequest()
     {
         var first = TestData.NewPatient(_clock, 45, "Patient One");
         var second = TestData.NewPatient(_clock, 5, "Patient Two");
-        _repository.BoardResult = new PagedResult<Patient>([first, second], 12, 2, 5);
+        _repository.Result = new TriageBoardPage([TestData.ToBoardRow(first), TestData.ToBoardRow(second)], 12);
 
         var page = await CreateService().GetBoardAsync(new TriageBoardRequest(PageNumber: 2, PageSize: 5), CancellationToken.None);
 
-        Assert.Equal(new PaginationRequest(2, 5), _repository.LastBoardQuery!.Page);
+        Assert.Equal(5, _repository.LastQuery!.Skip);
+        Assert.Equal(5, _repository.LastQuery.Take);
         Assert.Equal(12, page.TotalCount);
         Assert.Equal(2, page.PageNumber);
         Assert.Equal(5, page.PageSize);
@@ -76,7 +79,8 @@ public class TriageBoardServiceTests
         var long_ = TestData.NewPatient(_clock, 65, "Long Wait");
         var warning = TestData.NewPatient(_clock, 30, "Warning Wait");
         var fresh = TestData.NewPatient(_clock, 2, "Fresh");
-        _repository.BoardResult = new PagedResult<Patient>([long_, warning, fresh], 3, 1, 10);
+        _repository.Result = new TriageBoardPage(
+            [TestData.ToBoardRow(long_), TestData.ToBoardRow(warning), TestData.ToBoardRow(fresh)], 3);
 
         var page = await CreateService().GetBoardAsync(new TriageBoardRequest(), CancellationToken.None);
 
@@ -91,7 +95,7 @@ public class TriageBoardServiceTests
     {
         var patient = TestData.NewPatient(_clock, 10);
         patient.ApplyPriorityOverride(4, "Stable on reassessment", null, _clock);
-        _repository.BoardResult = new PagedResult<Patient>([patient], 1, 1, 10);
+        _repository.Result = new TriageBoardPage([TestData.ToBoardRow(patient)], 1);
 
         var item = Assert.Single((await CreateService().GetBoardAsync(new TriageBoardRequest(), CancellationToken.None)).Items);
 
@@ -101,9 +105,24 @@ public class TriageBoardServiceTests
     }
 
     [Fact]
+    public async Task GetBoardAsync_InTreatmentRow_ShowsTheFrozenWaitAndItsNextTransitions()
+    {
+        var patient = TestData.NewPatient(_clock, 40);
+        patient.ChangeStatus(PatientStatus.InTreatment, null, _clock);
+        _clock.Advance(TimeSpan.FromHours(2));
+        _repository.Result = new TriageBoardPage([TestData.ToBoardRow(patient)], 1);
+
+        var item = Assert.Single((await CreateService().GetBoardAsync(new TriageBoardRequest(), CancellationToken.None)).Items);
+
+        Assert.Equal(40, item.WaitingMinutes);
+        Assert.Equal(WaitingLevel.None, item.WaitingLevel);
+        Assert.Equal([PatientStatus.Discharged, PatientStatus.Admitted], item.AllowedTransitions);
+    }
+
+    [Fact]
     public async Task GetBoardAsync_Success_LogsDebugCountsOnly()
     {
-        _repository.BoardResult = new PagedResult<Patient>([TestData.NewPatient(_clock, 1, "Hidden Name")], 7, 2, 5);
+        _repository.Result = new TriageBoardPage([TestData.ToBoardRow(TestData.NewPatient(_clock, 1, "Hidden Name"))], 7);
 
         await CreateService().GetBoardAsync(new TriageBoardRequest(PageNumber: 2, PageSize: 5), CancellationToken.None);
 
@@ -143,7 +162,7 @@ public class TriageBoardServiceTests
         Assert.Equal(
             ["pageNumber", "pageSize", "priority", "status"],
             exception.Errors.Select(e => e.Field).Order(StringComparer.Ordinal));
-        Assert.Equal(0, _repository.BoardCalls);
+        Assert.Equal(0, _repository.Calls);
     }
 
     [Fact]
@@ -151,7 +170,7 @@ public class TriageBoardServiceTests
     {
         await Assert.ThrowsAsync<ValidationException>(() => CreateService().GetBoardAsync(null, CancellationToken.None));
 
-        Assert.Equal(0, _repository.BoardCalls);
+        Assert.Equal(0, _repository.Calls);
     }
 
     [Fact]

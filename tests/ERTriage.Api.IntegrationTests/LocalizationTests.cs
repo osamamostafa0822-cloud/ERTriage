@@ -77,7 +77,12 @@ public class LocalizationTests
             var localized = Assert.IsType<GeneralResponse<ERTriage.Application.Patients.Dtos.PatientDto>>(result.Value).Data!;
             Assert.Equal("تشبع الأكسجين 88% أقل من 90", localized.PriorityReason);
             Assert.Equal("SpO2 88% < 90", dto.PriorityReason);
-            var item = TriageBoardMapper.ToItem(patient, now);
+            // The board maps its projected row (the read repository returns TriageBoardRow, not the entity).
+            var row = new ERTriage.Domain.Triage.TriageBoardRow(
+                patient.Id, patient.FullName, patient.Age, patient.ChiefComplaint, patient.ArrivalTime,
+                patient.CurrentPriority, patient.CalculatedPriority, patient.PriorityReason, patient.IsOverridden,
+                patient.OverrideReason, patient.Status, patient.TreatmentStartedAt);
+            var item = TriageBoardMapper.ToItem(row, now);
             var page = new PagedResult<ERTriage.Application.Triage.Dtos.TriageBoardItemDto>([item], 1, 1, 10);
             var boardResult = new ObjectResult(
                 GeneralResponse<PagedResult<ERTriage.Application.Triage.Dtos.TriageBoardItemDto>>.Ok(page));

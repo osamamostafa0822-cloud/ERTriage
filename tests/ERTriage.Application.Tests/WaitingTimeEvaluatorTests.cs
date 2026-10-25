@@ -19,7 +19,7 @@ public class WaitingTimeEvaluatorTests
         var clock = TestData.Clock();
         var patient = TestData.NewPatient(clock, minutesWaited);
 
-        var result = WaitingTimeEvaluator.Evaluate(patient, clock.GetUtcNow());
+        var result = Evaluate(patient, clock.GetUtcNow());
 
         Assert.Equal(expectedMinutes, result.Minutes);
         Assert.Equal(expectedLevel, result.Level);
@@ -31,7 +31,7 @@ public class WaitingTimeEvaluatorTests
         var clock = TestData.Clock();
         var patient = TestData.NewPatient(clock, 29);
 
-        var result = WaitingTimeEvaluator.Evaluate(patient, clock.GetUtcNow().AddSeconds(59));
+        var result = Evaluate(patient, clock.GetUtcNow().AddSeconds(59));
 
         Assert.Equal(29, result.Minutes);
         Assert.Equal(WaitingLevel.Normal, result.Level);
@@ -43,7 +43,7 @@ public class WaitingTimeEvaluatorTests
         var clock = TestData.Clock();
         var patient = TestData.NewPatient(clock, minutesWaited: -4);
 
-        var result = WaitingTimeEvaluator.Evaluate(patient, clock.GetUtcNow());
+        var result = Evaluate(patient, clock.GetUtcNow());
 
         Assert.Equal(0, result.Minutes);
         Assert.Equal(WaitingLevel.Normal, result.Level);
@@ -57,7 +57,7 @@ public class WaitingTimeEvaluatorTests
 
         clock.Advance(TimeSpan.FromMinutes(45));
 
-        var result = WaitingTimeEvaluator.Evaluate(patient, clock.GetUtcNow());
+        var result = Evaluate(patient, clock.GetUtcNow());
 
         Assert.Equal(45, result.Minutes);
         Assert.Equal(WaitingLevel.Warning, result.Level);
@@ -70,7 +70,7 @@ public class WaitingTimeEvaluatorTests
         var patient = TestData.NewPatient(clock, 90);
         patient.ChangeStatus(PatientStatus.InTreatment, null, clock); // treatment starts at "now": waited 90 minutes
 
-        var result = WaitingTimeEvaluator.Evaluate(patient, clock.GetUtcNow().AddHours(5));
+        var result = Evaluate(patient, clock.GetUtcNow().AddHours(5));
 
         Assert.Equal(90, result.Minutes);
         Assert.Equal(WaitingLevel.None, result.Level);
@@ -86,7 +86,7 @@ public class WaitingTimeEvaluatorTests
         patient.ChangeStatus(PatientStatus.InTreatment, null, clock);
         patient.ChangeStatus(final, "Done.", clock);
 
-        var result = WaitingTimeEvaluator.Evaluate(patient, clock.GetUtcNow());
+        var result = Evaluate(patient, clock.GetUtcNow());
 
         Assert.Null(result.Minutes);
         Assert.Equal(WaitingLevel.None, result.Level);
@@ -99,7 +99,7 @@ public class WaitingTimeEvaluatorTests
         Assert.Equal(60, WaitingTimeEvaluator.CriticalMinutes);
     }
 
-    [Fact]
-    public void Evaluate_NullPatient_Throws() =>
-        Assert.Throws<ArgumentNullException>(() => WaitingTimeEvaluator.Evaluate(null!, TestData.Now));
+    // The evaluator takes the three fields it needs (the board passes its projected row); tests build them from a real patient.
+    private static WaitingTime Evaluate(Patient patient, DateTimeOffset now) =>
+        WaitingTimeEvaluator.Evaluate(patient.Status, patient.ArrivalTime, patient.TreatmentStartedAt, now);
 }

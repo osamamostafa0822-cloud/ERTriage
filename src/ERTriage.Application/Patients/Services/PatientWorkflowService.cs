@@ -7,7 +7,6 @@ using ERTriage.Domain.Patients;
 using Microsoft.Extensions.Logging;
 using ERTriage.Application.Patients.Mapping;
 using ERTriage.Application.Patients.Notifications;
-using ERTriage.Application.Patients.Repositories;
 
 namespace ERTriage.Application.Patients.Services;
 
